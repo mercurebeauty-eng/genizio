@@ -66,17 +66,20 @@ export class GlmVisionUnsupportedError extends Error {
 
 export class GlmMissingKeyError extends Error {
   constructor() {
-    super("Clé API GLM non configurée dans .env (GLM_API_KEY)");
+    super("Clé API GLM non configurée dans .env (GLM_API_KEY ou QWEN_API_KEY)");
     this.name = "GlmMissingKeyError";
   }
 }
 
-function glmConfig() {
+export function glmConfig() {
   const apiKey =
     process.env.GLM_API_KEY ||
     process.env.ZHIPU_API_KEY ||
     process.env.ZHIPUAI_API_KEY ||
-    process.env.BIGMODEL_API_KEY;
+    process.env.BIGMODEL_API_KEY ||
+    process.env.QWEN_API_KEY ||
+    process.env.DASHSCOPE_API_KEY ||
+    process.env.BAI_API_KEY;
   const baseUrl = (process.env.GLM_BASE_URL || GLM_BASE_URL_DEFAULT).replace(/\/$/, "");
   const model = process.env.GLM_MODEL || GLM_MODEL_DEFAULT;
   return { apiKey, baseUrl, model };

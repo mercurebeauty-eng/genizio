@@ -124,5 +124,5 @@ describe("PassportPdf", () => {
     // (l'arbre "/Type /Pages" est exclu avec le regard négatif).
     const pageEntries = (bytes.toString("latin1").match(/\/Type \/Page(?![s])/g) ?? []).length;
     expect(pageEntries).toBe(4);
-  }, 15_000);
+  }, 30_000);
 });

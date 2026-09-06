@@ -6,6 +6,7 @@ import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 import {
   getChildMentorInfo,
+  getChildMentorActivity,
   listChildSessionsForFeedback,
   listChildSessionsForValidation,
   confirmMentorSession,
@@ -87,6 +88,54 @@ type MentorInfo = {
   scopeType?: string | null;
 };
 
+// Libellés lisibles des actions journalisées (mentor_actions) — le parent n'a
+// pas à connaître les codes internes. `detail` traduit le payload en phrase.
+const MENTOR_ACTIVITY_LABELS: Record<
+  string,
+  { label: string; detail?: (a: any) => string | null }
+> = {
+  generate: {
+    label: "A généré de nouveaux défis",
+    detail: (a) => {
+      const count = Number((a.payload as any)?.count ?? 0);
+      return count > 0 ? `${count} défis ajoutés au journal de l'enfant` : null;
+    },
+  },
+  update: {
+    label: "A mis à jour un défi",
+    detail: (a) => {
+      const parts: string[] = [];
+      const progress = (a.payload as any)?.progress;
+      const status = (a.payload as any)?.status;
+      if (progress != null) parts.push(`progression à ${progress} %`);
+      else if (status === "in_progress") parts.push("défi démarré");
+      else if (status === "todo") parts.push("défi réinitialisé");
+      return parts.length > 0 ? parts.join(", ") : null;
+    },
+  },
+  proof_submitted: { label: "A soumis une preuve de réalisation" },
+  proof_rejected: { label: "Preuve non reconnue — nouvelle tentative prévue" },
+  abandon: {
+    label: "A marqué un défi non réussi",
+    detail: (a) => {
+      const chip = (a.payload as any)?.reasonChip as string | undefined;
+      const reason = (a.payload as any)?.reason as string | undefined;
+      if (chip) return `Raison : ${chip.replace(/_/g, " ")}`;
+      return reason ? `Raison : ${reason.slice(0, 120)}` : null;
+    },
+  },
+  // Anciennes entrées (journal de notes de séance et assignation de template,
+  // flux retirés depuis) — gardées lisibles si elles existent encore.
+  notes: {
+    label: "A noté une observation de séance",
+    detail: (a) => {
+      const note = (a.payload as any)?.note as string | undefined;
+      return note ? note.slice(0, 120) : null;
+    },
+  },
+  assign: { label: "A assigné un défi du catalogue" },
+};
+
 function MentorHubPage() {
   const { profileId } = Route.useParams();
   const { session, loading } = useSession();
@@ -146,6 +195,21 @@ function MentorHubPage() {
     Array<{ id: string; planned_at: string; notes: string | null }>
   >([]);
   const plannedSlotsFn = useServerFn(listChildPlannedSlots);
+
+  // Journal d'activité réel du mentor (mentor_actions) — ce que le mentor a FAIT
+  // (démarrage, progression, preuve, non réussi, génération), affiché à côté de la
+  // validation des séances pour un confirm/contest en connaissance de cause.
+  const [mentorActivity, setMentorActivity] = useState<
+    Array<{
+      id: string;
+      action: string;
+      payload: Record<string, unknown>;
+      createdAt: string;
+      mentorName: string;
+      challengeTitle: string | null;
+    }>
+  >([]);
+  const activityFn = useServerFn(getChildMentorActivity);
 
   // Paiement du Pack Accompagnement et du Diagnostic
   const [packMonths, setPackMonths] = useState(1);
@@ -335,6 +399,14 @@ function MentorHubPage() {
 
         const slots = await plannedSlotsFn({ data: { childId: profileId } });
         setPlannedSlots((slots as any[]) ?? []);
+
+        // Journal non bloquant : un échec ne doit pas vider tout le hub.
+        try {
+          const activity = await activityFn({ data: { childId: profileId } });
+          setMentorActivity((activity as any[]) ?? []);
+        } catch {
+          setMentorActivity([]);
+        }
 
         const notifs = await notificationsFn();
         const all = (notifs as any)?.notifications ?? [];
@@ -862,6 +934,62 @@ function MentorHubPage() {
                             {confirmingSessionId === s.id ? "Confirmation…" : "Confirmer"}
                           </button>
                         </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Journal d'activité réel du mentor : trace factuelle des actions
+                  opérées sur les défis (mentor_actions) — le complément du compte-rendu
+                  déclaré pour un confirm/contest en connaissance de cause. */}
+              {mentorActivity.length > 0 && (
+                <div className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="grid size-11 place-items-center rounded-2xl bg-brand/10 text-brand shrink-0">
+                      <Activity className="size-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-brand">
+                        Activité réelle du mentor
+                      </p>
+                      <p className="text-xs text-ink/50 mt-0.5">
+                        Les actions effectuées sur les défis de {childName || "votre enfant"} —
+                        la trace factuelle, en complément du compte-rendu de séance.
+                      </p>
+                    </div>
+                  </div>
+                  <ul className="space-y-2">
+                    {mentorActivity.map((a) => (
+                      <li
+                        key={a.id}
+                        className="rounded-2xl border border-ink/10 bg-surface px-4 py-3"
+                      >
+                        <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                          <p className="text-sm font-bold text-ink">
+                            {MENTOR_ACTIVITY_LABELS[a.action]?.label ?? a.action}
+                            {a.challengeTitle ? (
+                              <span className="text-ink/80 font-semibold"> — {a.challengeTitle}</span>
+                            ) : null}
+                          </p>
+                          <span className="text-[11px] font-bold text-ink/40 shrink-0">
+                            {new Date(a.createdAt).toLocaleDateString("fr-FR", {
+                              day: "numeric",
+                              month: "short",
+                            })}{" "}
+                            ·{" "}
+                            {new Date(a.createdAt).toLocaleTimeString("fr-FR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                        {MENTOR_ACTIVITY_LABELS[a.action]?.detail?.(a) ? (
+                          <p className="text-xs text-ink/60 mt-0.5">
+                            {MENTOR_ACTIVITY_LABELS[a.action]?.detail?.(a)}
+                          </p>
+                        ) : null}
+                        <p className="text-[11px] text-ink/40 mt-1">par {a.mentorName}</p>
                       </li>
                     ))}
                   </ul>

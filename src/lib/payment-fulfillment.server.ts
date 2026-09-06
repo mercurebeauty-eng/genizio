@@ -369,6 +369,8 @@ export async function applyPaystackEntitlement(
           pricing_tier: quota <= 50 ? "pilot" : "standard_campus",
           licensed_students_quota: quota,
           license_valid_until: validUntil,
+          license_paid: true,
+          license_paid_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq("id", metadata.school_id)

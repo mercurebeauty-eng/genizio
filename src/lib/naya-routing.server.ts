@@ -294,40 +294,63 @@ export async function dispatchChallengeTextGeneration(
       `[Naya Routing] Échec du modèle principal ${selectedModel} (${primaryErr.message}). Déclenchement du fallback de résilience...`,
     );
 
-    // 2. Fallback de secours : si DeepSeek a échoué, tester GLM ou Qwen ; sinon tester DeepSeek
-    if (selectedModel !== "deepseek-v4-flash") {
+    // 2. Cascade de fallback de résilience sur les autres moteurs IA
+    const fallbackCandidates: ChallengeModelId[] =
+      selectedModel === "deepseek-v4-flash"
+        ? ["glm-5.3-flash", "qwen3.8-flash"]
+        : selectedModel === "glm-5.3-flash"
+        ? ["deepseek-v4-flash", "qwen3.8-flash"]
+        : ["deepseek-v4-flash", "glm-5.3-flash"];
+
+    for (const fallbackModel of fallbackCandidates) {
       try {
-        const fallbackText = await params.callDeepSeekFn(
-          params.prompt,
-          params.jsonMode,
-          params.maxOutputTokens,
-          params.maxRetries,
-          "deepseek-chat",
+        if (fallbackModel === "deepseek-v4-flash") {
+          const fallbackText = await params.callDeepSeekFn(
+            params.prompt,
+            params.jsonMode,
+            params.maxOutputTokens,
+            params.maxRetries,
+            "deepseek-chat",
+          );
+          return { text: fallbackText, modelUsed: "deepseek-v4-flash" };
+        }
+        if (fallbackModel === "glm-5.3-flash") {
+          const glmRes = await callGLM(
+            [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: params.prompt },
+            ],
+            {
+              jsonMode: params.jsonMode,
+              maxTokens: params.maxOutputTokens,
+              maxRetries: 2,
+            },
+          );
+          return { text: glmRes.text, modelUsed: "glm-5.3-flash" };
+        }
+        if (fallbackModel === "qwen3.8-flash") {
+          const qwenRes = await callQwen(
+            [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: params.prompt },
+            ],
+            {
+              jsonMode: params.jsonMode,
+              maxTokens: params.maxOutputTokens,
+              maxRetries: 2,
+            },
+          );
+          return { text: qwenRes.text, modelUsed: "qwen3.8-flash" };
+        }
+      } catch (fallbackErr: any) {
+        console.error(
+          `[Naya Routing] Fallback ${fallbackModel} a également échoué:`,
+          fallbackErr?.message || fallbackErr,
         );
-        return { text: fallbackText, modelUsed: "deepseek-v4-flash" };
-      } catch (deepseekErr: any) {
-        console.error("[Naya Routing] Fallback DeepSeek a également échoué:", deepseekErr);
-      }
-    } else {
-      try {
-        const glmRes = await callGLM(
-          [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: params.prompt },
-          ],
-          {
-            jsonMode: params.jsonMode,
-            maxTokens: params.maxOutputTokens,
-            maxRetries: 2,
-          },
-        );
-        return { text: glmRes.text, modelUsed: "glm-5.3-flash" };
-      } catch (glmErr: any) {
-        console.error("[Naya Routing] Fallback GLM a également échoué:", glmErr);
       }
     }
 
-    // Si le fallback échoue également, lever l'erreur d'origine
+    // Si tous les fallbacks échouent, lever l'erreur d'origine
     throw primaryErr;
   }
 }

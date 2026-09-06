@@ -41,6 +41,7 @@ import {
   generateChallenges,
   updateChallenge,
   deleteChallenge,
+  calculateXPGain,
   validateChallengeProof,
   submitChallengeNotCompleted,
   getChildAISynthesis,
@@ -253,7 +254,7 @@ function ChallengesPage() {
   const [error, setError] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | Challenge["status"]>("all");
-  const [formatFilter, setFormatFilter] = useState<"all" | "projet" | "investigation" | "spark">(
+  const [formatFilter, setFormatFilter] = useState<"all" | "projet" | "spark">(
     "all",
   );
   const [activeProducts, setActiveProducts] = useState<any[]>([]);
@@ -1817,24 +1818,6 @@ function ChallengesPage() {
                               </span>
                             </button>
                             <button
-                              onClick={() => setFormatFilter("investigation")}
-                              className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-extrabold transition-all cursor-pointer ${
-                                formatFilter === "investigation"
-                                  ? "bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-2xs"
-                                  : "text-ink/60 hover:bg-surface border border-transparent"
-                              }`}
-                            >
-                              <span>
-                                🔍 Investigations (
-                                {
-                                  challenges.filter(
-                                    (c) => (c.kind ?? "").toLowerCase() === "investigation",
-                                  ).length
-                                }
-                                )
-                              </span>
-                            </button>
-                            <button
                               onClick={() => setFormatFilter("spark")}
                               className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-extrabold transition-all cursor-pointer ${
                                 formatFilter === "spark"
@@ -1863,8 +1846,6 @@ function ChallengesPage() {
                           if (formatFilter !== "all") {
                             const k = (c.kind ?? "").toLowerCase();
                             if (formatFilter === "projet" && k !== "projet") return false;
-                            if (formatFilter === "investigation" && k !== "investigation")
-                              return false;
                             if (
                               formatFilter === "spark" &&
                               k !== "spark_micro" &&
@@ -1893,6 +1874,7 @@ function ChallengesPage() {
                                 c={c}
                                 childId={profileId}
                                 childName={child.name}
+                                childAge={child.age}
                                 open={openId === c.id}
                                 hasKit={hasKit(c.material_tags)}
                                 onToggle={() => setOpenId((v) => (v === c.id ? null : c.id))}
@@ -2179,6 +2161,7 @@ function ChallengeCard({
   c,
   childId,
   childName,
+  childAge,
   open,
   onToggle,
   onStatus,
@@ -2195,6 +2178,8 @@ function ChallengeCard({
   c: Challenge;
   childId: string;
   childName: string;
+  /** Âge réel de l'enfant — l'XP gagnée dépend de lui (calculateXPGain). */
+  childAge?: number;
   open: boolean;
   onToggle: () => void;
   onStatus: (s: Challenge["status"]) => void;
@@ -2229,7 +2214,9 @@ function ChallengeCard({
   };
 
   const isProject = (c.kind ?? "").toLowerCase() === "projet";
-  const isInvestigation = (c.kind ?? "").toLowerCase() === "investigation";
+  // XP réellement attribuée à la complétion (calculateXPGain) — l'ancien
+  // affichage en dur 350/180/120 XP ne correspondait à la formule pour aucun âge.
+  const xpGain = calculateXPGain(childAge ?? 10);
 
   if (!open) {
     // Unexpanded state: A clean compact card that feels like the prototype
@@ -2239,9 +2226,7 @@ function ChallengeCard({
         className={`rounded-[1.5rem] p-5 shadow-sm transition-all flex flex-col gap-4 ${
           isProject
             ? "border-2 border-purple-300/80 bg-gradient-to-b from-purple-50/30 to-white ring-2 ring-purple-100/60"
-            : isInvestigation
-              ? "border border-emerald-200 bg-white"
-              : "border border-border bg-white"
+            : "border border-border bg-white"
         }`}
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -2306,7 +2291,7 @@ function ChallengeCard({
           />
           {isProject && (
             <span className="text-[10px] font-black text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-full shadow-2xs">
-              ⭐ 350 XP
+              ⭐ {xpGain} XP
             </span>
           )}
         </div>
@@ -2323,9 +2308,7 @@ function ChallengeCard({
 
   const headerGradient = isProject
     ? "bg-gradient-to-br from-[#28184c] via-[#3d236b] to-[#1a0f33]"
-    : isInvestigation
-      ? "bg-gradient-to-br from-[#0c3d30] via-[#145745] to-[#072920]"
-      : "bg-gradient-to-br from-[#df8f3e] to-[#a35e16]";
+    : "bg-gradient-to-br from-[#df8f3e] to-[#a35e16]";
 
   // Expanded state: The exact prototype "DÉFI — DÉTAIL" layout
   return (
@@ -2400,7 +2383,7 @@ function ChallengeCard({
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M11.5 2.3a.5.5 0 0 1 1 0l2.3 4.6 5.1.75a.5.5 0 0 1 .3.86l-3.7 3.6.87 5.1a.5.5 0 0 1-.77.53L12 15.9l-4.6 2.4a.5.5 0 0 1-.77-.53l.88-5.1-3.7-3.6a.5.5 0 0 1 .29-.86l5.1-.75z" />
               </svg>
-              {isProject ? "350 XP" : isInvestigation ? "180 XP" : "120 XP"}
+              {xpGain} XP
             </span>
           </div>
           <div className="font-display text-balance font-bold text-[30px] text-white leading-[1.02]">
@@ -2414,9 +2397,7 @@ function ChallengeCard({
           className={`flex gap-3 items-start rounded-[1rem] p-[14px] mb-5 ${
             isProject
               ? "bg-purple-50/90 border border-purple-200/80"
-              : isInvestigation
-                ? "bg-emerald-50/90 border border-emerald-200/80"
-                : "bg-brand-50"
+              : "bg-brand-50"
           }`}
         >
           <img
@@ -2430,11 +2411,6 @@ function ChallengeCard({
                 <b className="text-purple-700">Naya&nbsp;:</b> C'est un grand projet d'envergure
                 digne d'un créateur ! Prends ton temps, rassemble tes matériaux et avance pas à pas.
                 J'ai hâte de voir ton chef-d'œuvre ! ✨
-              </>
-            ) : isInvestigation ? (
-              <>
-                <b className="text-emerald-700">Naya&nbsp;:</b> Endosse ton costume de chercheur :
-                observe avec précision, teste et déduis le secret par toi-même ! 🔍
               </>
             ) : c.pedagogical_context &&
               (c.pedagogical_context.includes("«") ||
@@ -2454,11 +2430,7 @@ function ChallengeCard({
         </div>
 
         <div className="font-display text-balance font-bold text-[16px] mb-2 flex items-center gap-2">
-          {isProject
-            ? "🏛️ Le Chef-d'œuvre à concevoir"
-            : isInvestigation
-              ? "🔬 Ta mission d'enquêteur"
-              : "🎯 Ton objectif"}
+          {isProject ? "🏛️ Le Chef-d'œuvre à concevoir" : "🎯 Ton objectif"}
         </div>
         <div className="bg-card border border-border rounded-[1rem] p-4 text-[15px] leading-[1.5] text-ink shadow-sm mb-[22px]">
           <MarkdownContent content={c.description} />
@@ -2480,11 +2452,7 @@ function ChallengeCard({
                 <div className="font-display text-balance font-bold text-[15px] mb-2 flex items-center gap-2 text-ink/80">
                   <span>📋 Étapes réalisées du défi</span>
                 </div>
-                <StepAccordion
-                  steps={c.steps}
-                  isProject={isProject}
-                  isInvestigation={isInvestigation}
-                />
+                <StepAccordion steps={c.steps} isProject={isProject} />
               </div>
             )}
           </>
@@ -2492,11 +2460,7 @@ function ChallengeCard({
           <>
             {c.steps && c.steps.length > 0 && (
               <div className="mb-[22px]">
-                <StepAccordion
-                  steps={c.steps}
-                  isProject={isProject}
-                  isInvestigation={isInvestigation}
-                />
+                <StepAccordion steps={c.steps} isProject={isProject} />
               </div>
             )}
             <LockedAcademicSecretTeaser

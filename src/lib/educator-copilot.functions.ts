@@ -15,6 +15,7 @@ import {
   buildLessonDeconstructionPrompt,
   defaultGroupSizes,
   distributionFromTalents,
+  extractOutOfScope,
   FicheParseError,
   groupSizesFromDistribution,
   parseLessonFiche,
@@ -156,6 +157,70 @@ function contentPartsToText(user: string | Array<{ type: string; text?: string }
 
 const MAX_ATTEMPTS = 2; // 1 tentative + 1 retry correctif sur parse invalide
 
+const SCOPE_CHECK_SYSTEM = `Tu es le filtre de périmètre du Copilote Professeur de Génizio (spécialisé pédagogie, PAS un assistant généraliste). Détermine si la demande du professeur relève de la préparation de cours : discipline scolaire, notion à expliquer, exercice, leçon, évaluation, différenciation, gestion de classe, orientation scolaire.
+Hors périmètre : demandes personnelles ou commerciales (lettres, e-mails, CV, business), génération de code informatique sans contexte scolaire, devoirs à la place des élèves, questions générales sans lien avec l'enseignement, contenu inapproprié.
+Réponds STRICTEMENT en JSON : {"in_scope": true} ou {"in_scope": false, "reason": "<courte raison en français>"}.`;
+
+function scopeCheckInput(source: CopilotSource): string | null {
+  if (source.kind === "text") {
+    return [
+      `Discipline : ${source.subject}`,
+      `Thème : ${source.theme}`,
+      source.chapter ? `Chapitre : ${source.chapter}` : null,
+      source.objectives ? `Objectifs : ${source.objectives}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+  if (source.kind === "voice") return `Dictée du professeur : ${source.transcript}`;
+  // Photo : page de manuel / exercice par défaut du flux de préparation —
+  // l'indication texte du professeur est le seul signal de hors-périmètre.
+  return source.hint ? `Indication du professeur (photo jointe) : ${source.hint}` : null;
+}
+
+function outOfScopeError(reason: string): Error {
+  return new Error(
+    `Hors périmètre pédagogique — le Copilote ne traite que la préparation de cours (${reason}). ` +
+      `Un assistant généraliste comme ChatGPT ou Gemini sera plus adapté pour cette demande.`,
+  );
+}
+
+/**
+ * Double barrière de périmètre (§16 doc refonte pro) :
+ *  1. pré-check léger GLM (~120 tokens) AVANT consommation de quota — un refus
+ *     ne brûle pas une fiche ;
+ *  2. détection du contrat « out_of_scope » dans la réponse du modèle de
+ *     génération (fail-open : sans JSON exploitable, on tente le parse normal).
+ * Panne du filtre → fail-open : la génération elle-même reste contrainte par
+ * le contrat de périmètre du prompt système.
+ */
+async function assertPedagogicalScope(source: CopilotSource): Promise<void> {
+  const input = scopeCheckInput(source);
+  if (!input) return; // photo sans indication → périmètre assumé
+  try {
+    const res = await callGLM(
+      [
+        { role: "system", content: SCOPE_CHECK_SYSTEM },
+        { role: "user", content: input },
+      ],
+      { jsonMode: true, maxTokens: 150 },
+    );
+    const verdict = extractOutOfScope(res.text) ?? null;
+    // in_scope:false arrive sous la même forme de refus ; sinon le JSON lu dit
+    // in_scope:true (ou est illisible) → on laisse passer.
+    if (verdict) throw outOfScopeError(verdict);
+    try {
+      const parsed = JSON.parse(res.text) as { in_scope?: boolean; reason?: string };
+      if (parsed.in_scope === false) throw outOfScopeError(parsed.reason ?? "demande hors cours");
+    } catch (scopeErr) {
+      if (scopeErr instanceof Error && scopeErr.message.startsWith("Hors périmètre")) throw scopeErr;
+    }
+  } catch (err) {
+    if (err instanceof Error && err.message.startsWith("Hors périmètre")) throw err;
+    console.warn("Filtre de périmètre indisponible (fail-open) :", (err as Error).message);
+  }
+}
+
 export const generateClassLessonDeconstruction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth, requireRateLimit])
   .validator((input: unknown) => GenerateInputSchema.parse(input))
@@ -175,7 +240,10 @@ export const generateClassLessonDeconstruction = createServerFn({ method: "POST"
     }
     const verified = profile.is_verified === true;
 
-    // 2. Quota journalier persistant (incrément atomique SQL, fail-open tracé)
+    // 2. Périmètre pédagogique (§16 — refus AVANT consommation de quota)
+    await assertPedagogicalScope(data.source);
+
+    // 3. Quota journalier persistant (incrément atomique SQL, fail-open tracé)
     const limit = resolveAiDailyLimit("educator_copilot", verified);
     const quota = await consumeAiFeatureQuota(db, userId, "educator_copilot", limit);
     if (!quota.allowed) {
@@ -184,7 +252,7 @@ export const generateClassLessonDeconstruction = createServerFn({ method: "POST"
       );
     }
 
-    // 3. Segmentation (agrégats, jamais de données individuelles)
+    // 4. Segmentation (agrégats, jamais de données individuelles)
     const [groupSizes, academicContext] = await Promise.all([
       resolveClassGroupSizes(db, profile.school_id ?? null, data.headcount),
       resolveClassAcademicContext(db, profile.school_id ?? null),
@@ -196,7 +264,7 @@ export const generateClassLessonDeconstruction = createServerFn({ method: "POST"
       academicContext,
     };
 
-    // 4. Génération GLM (fallback Claude) + parse avec retry correctif
+    // 5. Génération GLM (fallback Claude) + parse avec retry correctif
     const source: CopilotSource = data.source;
     let provider: "glm" | "claude-fallback" = "glm";
     let lastRaw: string | null = null;
@@ -240,9 +308,14 @@ export const generateClassLessonDeconstruction = createServerFn({ method: "POST"
       }
 
       try {
+        // 2e barrière de périmètre : le modèle de génération peut exercer son
+        // propre auto-refus (contrat « out_of_scope » du prompt système).
+        const scopeRefusal = extractOutOfScope(raw);
+        if (scopeRefusal) throw outOfScopeError(scopeRefusal);
+
         const { fiche, warnings } = parseLessonFiche(raw, data.headcount);
 
-        // 5. Audit Loup (déterministe + sémantique échantillonnée) — jamais bloquant.
+        // 6. Audit Loup (déterministe + sémantique échantillonnée) — jamais bloquant.
         try {
           await verifyAndLog({
             kind: "educator_lesson_fiche",
@@ -254,7 +327,7 @@ export const generateClassLessonDeconstruction = createServerFn({ method: "POST"
           console.error("verifyAndLog (non bloquant) :", auditErr);
         }
 
-        // 6. Photo source conservée (bucket privé) uniquement pour une fiche valide.
+        // 7. Photo source conservée (bucket privé) uniquement pour une fiche valide.
         let sourceImagePath: string | null = null;
         if (source.kind === "photo") {
           try {
@@ -298,6 +371,11 @@ export const generateClassLessonDeconstruction = createServerFn({ method: "POST"
           quotaRemaining: quota.remaining,
         };
       } catch (parseErr) {
+        // Un auto-refus de périmètre n'est pas une fiche invalide : il ne
+        // déclenche pas de retry et remonte tel quel à l'enseignant.
+        if (parseErr instanceof Error && parseErr.message.startsWith("Hors périmètre")) {
+          throw parseErr;
+        }
         lastRaw = raw;
         lastError = parseErr as Error;
         if (parseErr instanceof FicheParseError && attempt < MAX_ATTEMPTS - 1) {

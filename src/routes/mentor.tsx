@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
@@ -32,10 +32,6 @@ import {
   listMyPlannedSlots,
 } from "@/lib/mentor-scheduling.functions";
 import {
-  mentorUpdateChallenge,
-  mentorSubmitNotCompleted,
-  mentorSubmitProof,
-  mentorSubmitDeclarativeProof,
   mentorGenerateChallenges,
 } from "@/lib/mentor-operator.functions";
 import {
@@ -43,12 +39,9 @@ import {
   saveMentorReportDraft,
   submitMentorReport,
 } from "@/lib/mentor-reports.functions";
-import { NOT_COMPLETED_CHIPS } from "@/lib/challenges.functions";
-import { fileToCompressedProof } from "@/lib/image-proof";
 import { getChildGuild } from "@/lib/guilds";
 import { MentorDiscoveryFeed } from "@/components/mentor/MentorDiscoveryFeed";
 import { SaturdayClubSquadView } from "@/components/mentor/SaturdayClubSquadView";
-import { useBlobUrl } from "@/hooks/use-blob-url";
 import {
   Loader2,
   Users,
@@ -64,11 +57,8 @@ import {
   Brain,
   Phone,
   CalendarCheck,
-  Play,
-  Camera,
   Send,
   FileText,
-  RotateCcw,
   Sparkles,
   Bell,
   Activity,
@@ -83,6 +73,7 @@ import {
 } from "lucide-react";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { MarkdownContent } from "@/components/ui/markdown-content";
+import { ChallengeKindBadge } from "@/components/challenges/ChallengeKindBadge";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { formatPedagogicalIntention } from "@/lib/pedagogical-intention";
@@ -119,19 +110,14 @@ type ChildWithChallenges = {
   assignedAt: string;
   /** Mentor Copilote (décision #74) : pack | campaign = opérateur, none = lecture. */
   accompaniment: "pack" | "campaign" | "none";
-  /** Dernières actions du mentor sur cet enfant (le journal sert de journal de séance). */
-  mentorActions: {
-    id: string;
-    challenge_id: string | null;
-    action: string;
-    payload: any;
-    created_at: string;
-  }[];
   challenges: {
     id: string;
     title: string;
     domain: string;
     status: "todo" | "in_progress" | "completed" | "not_completed";
+    progress: number;
+    kind: string;
+    guidance_level: number;
     created_at: string;
     description: string;
     duration: string;
@@ -141,8 +127,14 @@ type ChildWithChallenges = {
     difficulty: string;
     requires_supervision: boolean;
     supervision_warning: string | null;
-    proof_mode: string;
-    proof_target: { metric?: string; value?: number } | null;
+    not_completed_reason: string | null;
+    pedagogical_context: string | null;
+    challenge_role: string | null;
+    recommendation_type: string | null;
+    reformulation_of: string | null;
+    presentation_mode: string | null;
+    materials: string[];
+    steps: string[];
     completed_at: string | null;
   }[];
 };
@@ -169,7 +161,11 @@ function MentorDashboardPage() {
   const [reportLoading, setReportLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedChallenge, setSelectedChallenge] = useState<any | null>(null);
+  // Modal vivant : on ne stocke que l'ID — le défi affiché est dérivé du state
+  // `children` à chaque render. Après un refetch (génération, déclaration…), le
+  // modal reflète les données fraîches au lieu du snapshot figé à l'ouverture
+  // (l'ancien bug « le bouton Commencer ne réagit pas sans fermer/rouvrir »).
+  const [selectedChallengeId, setSelectedChallengeId] = useState<string | null>(null);
   // Score de fiabilité (V2) : renvoyé par getMentorDashboard, affiché dans l'en-tête.
   const [score, setScore] = useState<number | null>(null);
   const [sessionsThisMonth, setSessionsThisMonth] = useState(0);
@@ -230,10 +226,6 @@ function MentorDashboardPage() {
   const planSlotFn = useServerFn(planMentorSessionSlot);
   const cancelSlotFn = useServerFn(cancelMentorSessionSlot);
   const listSlotsFn = useServerFn(listMyPlannedSlots);
-  const supUpdateFn = useServerFn(mentorUpdateChallenge);
-  const supNotCompletedFn = useServerFn(mentorSubmitNotCompleted);
-  const supProofFn = useServerFn(mentorSubmitProof);
-  const supDeclarativeFn = useServerFn(mentorSubmitDeclarativeProof);
   const supGenerateFn = useServerFn(mentorGenerateChallenges);
   const getReportsFn = useServerFn(getMentorReports);
   const saveReportFn = useServerFn(saveMentorReportDraft);
@@ -252,23 +244,8 @@ function MentorDashboardPage() {
   });
   const [savingReport, setSavingReport] = useState(false);
   const [submittingReport, setSubmittingReport] = useState(false);
-  // Abandon (motif obligatoire).
-  const [notCompletedFor, setNotCompletedFor] = useState<any | null>(null);
-  const [notCompletedReason, setNotCompletedReason] = useState("");
-  const [notCompletedChip, setNotCompletedChip] = useState<string | undefined>(undefined);
-  const [submittingNotCompleted, setSubmittingNotCompleted] = useState(false);
-  // Soumission de preuve (photo en séance ou déclarative).
-  const [proofFor, setProofFor] = useState<any | null>(null);
-  const [proofPhoto, setProofPhoto] = useState<File | null>(null);
-  // URL daperçu révoquée automatiquement (fuite mémoire sinon : un
-  // createObjectURL en render créait une URL à CHAQUE re-render).
-  const proofPhotoUrl = useBlobUrl(proofPhoto);
-  const [declarativeValue, setDeclarativeValue] = useState<string>("");
-  const [submittingProof, setSubmittingProof] = useState(false);
   // Génération de défis.
   const [generatingFor, setGeneratingFor] = useState(false);
-  // Note de séance dans la modale (journal mentor).
-  const [noteDraft, setNoteDraft] = useState("");
 
   const defaultPeriod = () => {
     const now = new Date();
@@ -491,106 +468,10 @@ function MentorDashboardPage() {
     }
   };
 
-  // ── Mentor Copilote — actions opérateur (décision #74) ──────────────────
-
-  const runOperator = async (fn: () => Promise<unknown>, successMsg: string, failMsg: string) => {
-    try {
-      await fn();
-      toast.success(successMsg);
-      await loadDashboard();
-    } catch (err: any) {
-      toast.error(err.message || failMsg);
-    }
-  };
-
-  const handleStart = (c: any) =>
-    runOperator(
-      () => supUpdateFn({ data: { id: c.id, status: "in_progress" } }),
-      `Défi « ${c.title} » démarré.`,
-      "Impossible de démarrer le défi.",
-    );
-
-  const handleProgress = (c: any, progress: number) =>
-    runOperator(
-      () => supUpdateFn({ data: { id: c.id, progress } }),
-      `Progression mise à jour (${progress}%).`,
-      "Impossible de mettre à jour la progression.",
-    );
-
-  const handleNote = (c: any, note: string) =>
-    runOperator(
-      () => supUpdateFn({ data: { id: c.id, notes: note } }),
-      "Note de séance enregistrée.",
-      "Impossible d'enregistrer la note.",
-    );
-
-  const handleNotCompleted = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!notCompletedFor) return;
-    setSubmittingNotCompleted(true);
-    try {
-      await supNotCompletedFn({
-        data: {
-          id: notCompletedFor.id,
-          reason: notCompletedReason.trim(),
-          reasonChip: notCompletedChip,
-        },
-      });
-      toast.success("Défi marqué comme non réussi — le parent est informé.");
-      setNotCompletedFor(null);
-      setNotCompletedReason("");
-      setNotCompletedChip(undefined);
-      await loadDashboard();
-    } catch (err: any) {
-      toast.error(err.message || "Impossible de marquer le défi comme non réussi.");
-    } finally {
-      setSubmittingNotCompleted(false);
-    }
-  };
-
-  const handleProofSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!proofFor) return;
-    setSubmittingProof(true);
-    try {
-      const isDeclarative = proofFor.proof_mode === "declarative";
-      if (isDeclarative) {
-        const reported = Number(declarativeValue);
-        if (Number.isNaN(reported)) throw new Error("Saisissez une valeur numérique.");
-        const res = await supDeclarativeFn({
-          data: { challengeId: proofFor.id, reportedValue: reported },
-        });
-        toast.success(
-          (res as any)?.relevant
-            ? "Défi validé — points attribués !"
-            : "Sous la cible — l'enfant peut retenter.",
-        );
-      } else {
-        if (!proofPhoto) throw new Error("Ajoutez la photo prise pendant la séance.");
-        const compressed = await fileToCompressedProof(proofPhoto);
-        const res = await supProofFn({
-          data: {
-            challengeId: proofFor.id,
-            proofImageBase64: compressed.base64,
-            proofImageMediaType: compressed.mediaType,
-          },
-        });
-        toast.success(
-          (res as any)?.relevant
-            ? "Preuve acceptée par Naya — défi complété !"
-            : "Preuve non reconnue pour ce défi — réessayez.",
-        );
-      }
-      setProofFor(null);
-      setProofPhoto(null);
-      setDeclarativeValue("");
-      await loadDashboard();
-    } catch (err: any) {
-      toast.error(err.message || "Impossible de soumettre la preuve.");
-    } finally {
-      setSubmittingProof(false);
-    }
-  };
+  // ── Mentor Copilote — lecture des défis (décision #74) ─────────────────────
+  // Les ACTIONS (commencer, progression, preuve, non réussi) se font dans la vue
+  // parent en mode Mentor (décision #81) : une seule implémentation, déjà riche
+  // (badges micro/projet, Mode Enfant, garde-fous). Le modal ici reste en lecture.
 
   const handleGenerate = async () => {
     if (!selectedId) return;
@@ -645,6 +526,16 @@ function MentorDashboardPage() {
   };
 
   const selected = children.find((c) => c.id === selectedId) ?? null;
+
+  // Défi affiché dans le modal, dérivé du state vivant (jamais un snapshot figé).
+  const selectedChallenge = useMemo(() => {
+    if (!selectedChallengeId) return null;
+    for (const child of children) {
+      const found = child.challenges.find((c) => c.id === selectedChallengeId);
+      if (found) return found;
+    }
+    return null;
+  }, [selectedChallengeId, children]);
 
   if (loading || !session || isMentor === null) {
     return (
@@ -1257,10 +1148,7 @@ function MentorDashboardPage() {
                                   {selected.challenges.map((c) => (
                                     <li key={c.id}>
                                       <button
-                                        onClick={() => {
-                                          setSelectedChallenge(c);
-                                          setNoteDraft("");
-                                        }}
+                                        onClick={() => setSelectedChallengeId(c.id)}
                                         className="w-full flex items-center justify-between rounded-2xl border border-ink/10 bg-surface px-4 py-3 hover:bg-stone-50 transition-all text-left cursor-pointer"
                                       >
                                         <div>
@@ -1496,6 +1384,10 @@ function MentorDashboardPage() {
                           ? "❌ Non réussi"
                           : "📋 À faire"}
                   </span>
+                  <ChallengeKindBadge
+                    kind={selectedChallenge.kind}
+                    domain={selectedChallenge.domain}
+                  />
                   {selectedChallenge.difficulty && (
                     <span className="rounded-full border border-ink/10 bg-orange-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-orange-800">
                       🔥 {selectedChallenge.difficulty}
@@ -1513,7 +1405,7 @@ function MentorDashboardPage() {
                 </h3>
               </div>
               <button
-                onClick={() => setSelectedChallenge(null)}
+                onClick={() => setSelectedChallengeId(null)}
                 className="rounded-xl border border-ink/10 p-1.5 hover:bg-stone-100 transition-all cursor-pointer"
               >
                 <X className="size-5" />
@@ -1585,7 +1477,9 @@ function MentorDashboardPage() {
                 selectedChallenge.steps.length > 0 && (
                   <div>
                     <h4 className="text-xs font-black uppercase tracking-widest text-ink/60 mb-3">
-                      Étapes de réalisation
+                      {(selectedChallenge.kind ?? "").toLowerCase() === "projet"
+                        ? "Phases du projet"
+                        : "Étapes de réalisation"}
                     </h4>
                     <ol className="space-y-3">
                       {selectedChallenge.steps.map((s: string, i: number) => (
@@ -1649,150 +1543,59 @@ function MentorDashboardPage() {
                   )}
                 </div>
               )}
-              {/* Notes de séance du mentor (journal) */}
-              {selected?.accompaniment !== "none" &&
-                selectedChallenge &&
-                (() => {
-                  const notes = (selected?.mentorActions ?? []).filter(
-                    (a) => a.action === "notes" && a.challenge_id === selectedChallenge.id,
-                  );
-                  if (notes.length === 0) return null;
-                  return (
-                    <div className="rounded-2xl border border-ink/10 bg-brand/5 p-4">
-                      <p className="mb-2 text-xs font-extrabold uppercase tracking-widest text-brand">
-                        Notes de séance (mentor)
-                      </p>
-                      <ul className="space-y-2">
-                        {notes.slice(0, 3).map((n) => (
-                          <li key={n.id} className="text-sm text-ink/80 font-medium">
-                            <span className="text-[10px] font-bold text-ink/40 mr-2">
-                              {new Date(n.created_at).toLocaleDateString("fr-FR")}
-                            </span>
-                            {(n.payload as any)?.note}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  );
-                })()}
+
+              {/* Raison d'échec si non réussi */}
+              {selectedChallenge.status === "not_completed" &&
+                selectedChallenge.not_completed_reason && (
+                  <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                    <p className="mb-1 text-xs font-extrabold uppercase tracking-widest text-rose-700">
+                      Raison du non-aboutissement
+                    </p>
+                    <p className="text-sm text-ink/80 leading-relaxed font-medium">
+                      {selectedChallenge.not_completed_reason}
+                    </p>
+                  </div>
+                )}
+
+              {/* Progression réelle (dérivée du state vivant — plus de « ?? 50 » arbitraire) */}
+              {selectedChallenge.status === "in_progress" && (
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-xs font-black uppercase tracking-widest text-ink/60">
+                      Progression
+                    </p>
+                    <p className="text-xs font-black text-brand">
+                      {selectedChallenge.progress ?? 0} %
+                    </p>
+                  </div>
+                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-surface">
+                    <div
+                      className="h-full rounded-full bg-brand transition-all"
+                      style={{ width: `${Math.max(2, Math.min(100, selectedChallenge.progress ?? 0))}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* ── Actions opérateur (décision #74) — enfant accompagné ── */}
-            {selected?.accompaniment !== "none" && selectedChallenge.status !== "completed" && (
-              <div className="mt-6 rounded-2xl border-2 border-brand/20 bg-brand/5 p-4 space-y-3">
-                <p className="text-xs font-black uppercase tracking-widest text-brand flex items-center gap-1.5">
-                  <Zap className="size-4" />
-                  Actions opérateur — {selected?.name ?? "enfant"}
-                </p>
-
-                <div className="flex flex-wrap gap-2">
-                  {(selectedChallenge.status === "todo" ||
-                    selectedChallenge.status === "not_completed") && (
-                    <button
-                      onClick={() => handleStart(selectedChallenge)}
-                      className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-xs font-black text-white shadow-sm hover:-translate-y-0.5 transition-all cursor-pointer"
-                    >
-                      <Play className="size-4" />
-                      {selectedChallenge.status === "not_completed"
-                        ? "Reprendre le défi"
-                        : "Commencer"}
-                    </button>
-                  )}
-
-                  {selectedChallenge.status === "in_progress" && (
-                    <>
-                      <div className="flex items-center gap-2 rounded-xl border border-ink/10 bg-white px-3 py-1.5">
-                        <button
-                          onClick={() =>
-                            handleProgress(
-                              selectedChallenge,
-                              Math.max(
-                                0,
-                                Math.min(100, ((selectedChallenge as any).progress ?? 50) - 10),
-                              ),
-                            )
-                          }
-                          className="grid size-7 place-items-center rounded-lg bg-surface font-black text-ink hover:bg-stone-200 cursor-pointer"
-                        >
-                          −
-                        </button>
-                        <span className="text-xs font-black text-ink w-10 text-center">
-                          {(selectedChallenge as any).progress ?? 0}%
-                        </span>
-                        <button
-                          onClick={() =>
-                            handleProgress(
-                              selectedChallenge,
-                              Math.max(
-                                0,
-                                Math.min(100, ((selectedChallenge as any).progress ?? 50) + 10),
-                              ),
-                            )
-                          }
-                          className="grid size-7 place-items-center rounded-lg bg-surface font-black text-ink hover:bg-stone-200 cursor-pointer"
-                        >
-                          +
-                        </button>
-                      </div>
-                      <button
-                        onClick={() => setProofFor(selectedChallenge)}
-                        className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black text-white shadow-sm hover:-translate-y-0.5 transition-all cursor-pointer"
-                      >
-                        <Camera className="size-4" />
-                        {selectedChallenge.proof_mode === "declarative"
-                          ? "Valider par déclaration"
-                          : "Soumettre la preuve (photo)"}
-                      </button>
-                    </>
-                  )}
-
-                  <button
-                    onClick={() => {
-                      setNotCompletedFor(selectedChallenge);
-                      setNotCompletedReason("");
-                      setNotCompletedChip(undefined);
-                    }}
-                    className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-black text-rose-700 hover:bg-rose-100 transition-all cursor-pointer"
-                  >
-                    <X className="size-4" />
-                    Marquer non réussi
-                  </button>
-                </div>
-
-                {/* Note de séance (→ journal, jamais challenges.notes) */}
-                <div className="flex gap-2">
-                  <input
-                    value={noteDraft}
-                    onChange={(e) => setNoteDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && noteDraft.trim()) {
-                        handleNote(selectedChallenge, noteDraft.trim());
-                        setNoteDraft("");
-                      }
-                    }}
-                    placeholder="Note de séance (appuyez sur Entrée pour enregistrer)…"
-                    maxLength={2000}
-                    className="flex-1 rounded-xl border border-ink/10 bg-white px-4 py-2 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand"
-                  />
-                  <button
-                    onClick={() => {
-                      if (noteDraft.trim()) {
-                        handleNote(selectedChallenge, noteDraft.trim());
-                        setNoteDraft("");
-                      }
-                    }}
-                    className="rounded-xl bg-ink px-3.5 py-2 text-xs font-black text-white hover:bg-ink/90 transition-all cursor-pointer"
-                  >
-                    Enregistrer
-                  </button>
-                </div>
-              </div>
-            )}
-
             {/* Modal Footer */}
-            <div className="border-t-2 border-ink pt-4 mt-6 flex justify-end">
+            <div className="border-t-2 border-ink pt-4 mt-6 flex flex-wrap justify-end gap-2">
+              {selected && (
+                <button
+                  onClick={() =>
+                    navigate({
+                      to: "/profiles/$profileId/challenges",
+                      params: { profileId: selected.id },
+                    })
+                  }
+                  className="inline-flex items-center gap-2 rounded-2xl bg-brand px-6 py-2.5 text-xs font-black text-white shadow-sm hover:-translate-y-0.5 transition-all cursor-pointer"
+                >
+                  Ouvrir la vue complète
+                  <Send className="size-4" />
+                </button>
+              )}
               <button
-                onClick={() => setSelectedChallenge(null)}
+                onClick={() => setSelectedChallengeId(null)}
                 className="rounded-2xl border border-ink/10 bg-ink px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:-translate-y-0.5 transition-all cursor-pointer"
               >
                 Fermer
@@ -2045,201 +1848,6 @@ function MentorDashboardPage() {
                         <CalendarCheck className="size-4" />
                       )}
                       Valider la séance
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          );
-        })()}
-
-      {/* Modal — Marquer non réussi (opérateur, motif obligatoire) */}
-      {notCompletedFor &&
-        (() => {
-          return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm overflow-y-auto">
-              <div className="w-full max-w-md my-auto max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 md:p-8 shadow-xl animate-in zoom-in-95 duration-200">
-                <div className="flex items-start justify-between gap-4 border-b-2 border-ink pb-4 mb-6">
-                  <div>
-                    <h3 className="font-display text-balance text-xl font-black text-ink">
-                      Marquer comme non réussi
-                    </h3>
-                    <p className="text-sm text-ink/60 mt-0.5">
-                      « {notCompletedFor.title} » — le parent sera informé, aucun point n'est
-                      attribué.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setNotCompletedFor(null)}
-                    className="rounded-xl border border-ink/10 p-1.5 hover:bg-stone-100 transition-all cursor-pointer"
-                  >
-                    <X className="size-5" />
-                  </button>
-                </div>
-
-                <form onSubmit={handleNotCompleted} className="space-y-5">
-                  <div>
-                    <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
-                      Motif <span className="normal-case text-ink/40">(obligatoire)</span>
-                    </label>
-                    <textarea
-                      value={notCompletedReason}
-                      onChange={(e) => setNotCompletedReason(e.target.value)}
-                      rows={3}
-                      required
-                      maxLength={2000}
-                      placeholder="Pourquoi ce défi n'a pas pu être réalisé ?"
-                      className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
-                      Raison rapide <span className="normal-case text-ink/40">(optionnel)</span>
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {NOT_COMPLETED_CHIPS.map((chip) => (
-                        <button
-                          key={chip}
-                          type="button"
-                          onClick={() => setNotCompletedChip(chip)}
-                          className={`rounded-full px-3 py-1.5 text-xs font-bold border transition-all cursor-pointer ${
-                            notCompletedChip === chip
-                              ? "border-brand bg-brand text-white"
-                              : "border-ink/10 bg-surface text-ink/70 hover:border-ink/30"
-                          }`}
-                        >
-                          {chip.replace(/_/g, " ")}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="border-t-2 border-ink pt-4 flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setNotCompletedFor(null)}
-                      className="rounded-2xl border border-ink/10 px-6 py-2.5 text-xs font-bold text-ink/60 hover:bg-stone-100 transition-all cursor-pointer"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={submittingNotCompleted}
-                      className="inline-flex items-center gap-2 rounded-2xl bg-rose-600 px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:-translate-y-0.5 transition-all disabled:opacity-50 cursor-pointer"
-                    >
-                      {submittingNotCompleted ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <X className="size-4" />
-                      )}
-                      Confirmer
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          );
-        })()}
-
-      {/* Modal — Soumettre une preuve (photo prise en séance ou déclarative) */}
-      {proofFor &&
-        (() => {
-          const isDeclarative = proofFor.proof_mode === "declarative";
-          const target = proofFor.proof_target as { metric?: string; value?: number } | null;
-          return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm overflow-y-auto">
-              <div className="w-full max-w-md my-auto max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 md:p-8 shadow-xl animate-in zoom-in-95 duration-200">
-                <div className="flex items-start justify-between gap-4 border-b-2 border-ink pb-4 mb-6">
-                  <div>
-                    <h3 className="font-display text-balance text-xl font-black text-ink">
-                      {isDeclarative ? "Valider par déclaration" : "Soumettre la preuve"}
-                    </h3>
-                    <p className="text-sm text-ink/60 mt-0.5">
-                      « {proofFor.title} » — vous êtes l'adulte présent en séance.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setProofFor(null)}
-                    className="rounded-xl border border-ink/10 p-1.5 hover:bg-stone-100 transition-all cursor-pointer"
-                  >
-                    <X className="size-5" />
-                  </button>
-                </div>
-
-                <form onSubmit={handleProofSubmit} className="space-y-5">
-                  {isDeclarative ? (
-                    <div>
-                      <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
-                        Résultat de l'enfant{" "}
-                        {target?.metric ? (
-                          <span className="normal-case text-ink/40">
-                            (objectif : {target.value} {target.metric})
-                          </span>
-                        ) : null}
-                      </label>
-                      <input
-                        type="number"
-                        required
-                        min={0}
-                        value={declarativeValue}
-                        onChange={(e) => setDeclarativeValue(e.target.value)}
-                        placeholder={target?.value != null ? String(target.value) : "0"}
-                        className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-bold text-ink outline-none focus:ring-2 focus:ring-brand"
-                      />
-                      <p className="text-[11px] text-ink/50 mt-2">
-                        Confiance en l'adulte présent (décision #36) — la cible est comparée
-                        strictement, aucun appel IA.
-                      </p>
-                    </div>
-                  ) : (
-                    <div>
-                      <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
-                        Photo prise pendant la séance
-                      </label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        required
-                        capture="environment"
-                        onChange={(e) => setProofPhoto(e.target.files?.[0] ?? null)}
-                        className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-medium text-ink outline-none file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white cursor-pointer"
-                      />
-                      {proofPhoto && (
-                        <div className="mt-3 flex items-center gap-3">
-                          <img
-                            src={proofPhotoUrl ?? undefined}
-                            alt="Preuve"
-                            className="size-14 rounded-xl object-cover border border-ink/10"
-                          />
-                          <p className="text-[11px] text-ink/50">
-                            {proofPhoto.name} — Naya vérifiera la pertinence de la photo, puis les
-                            points et le Jumeau seront mis à jour comme pour une validation parent.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="border-t-2 border-ink pt-4 flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setProofFor(null)}
-                      className="rounded-2xl border border-ink/10 px-6 py-2.5 text-xs font-bold text-ink/60 hover:bg-stone-100 transition-all cursor-pointer"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={submittingProof}
-                      className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:-translate-y-0.5 transition-all disabled:opacity-50 cursor-pointer"
-                    >
-                      {submittingProof ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <Send className="size-4" />
-                      )}
-                      Soumettre
                     </button>
                   </div>
                 </form>

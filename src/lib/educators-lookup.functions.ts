@@ -195,7 +195,44 @@ const SaveEducatorProfileSchema = z.object({
 });
 
 /**
+ * Résout le statut de vérification d'un profil professionnel à sa création :
+ *   • e-mail ∈ authorized_emails (ou chef d'établissement déclaré) → verified
+ *     immédiat (chaîne d'autorisation Admin OS) ;
+ *   • sinon → pending : l'espace professionnel reste visible, l'activation est
+ *     manuelle (Admin OS) — l'auto-inscription ne s'auto-valide plus.
+ */
+async function resolveVerificationStatus(
+  db: any,
+  userId: string,
+  email: string | null,
+  schoolId: string | null,
+): Promise<"pending" | "verified"> {
+  if (email) {
+    // Les e-mails autorisés sont stockés normalisés en minuscules par
+    // addAuthorizedEmailAdmin — la comparaison est donc une égalité simple.
+    const { data: authorized } = await db
+      .from("authorized_emails")
+      .select("id")
+      .eq("email", email.toLowerCase().trim())
+      .limit(1)
+      .maybeSingle();
+    if (authorized) return "verified";
+  }
+  if (schoolId) {
+    const { data: school } = await db
+      .from("schools")
+      .select("leader_user_id, status")
+      .eq("id", schoolId)
+      .maybeSingle();
+    if (school && school.leader_user_id === userId) return "verified";
+  }
+  return "pending";
+}
+
+/**
  * Permet à un éducateur de configurer son profil, son @handle, son école et son #CodeClasse.
+ * Le statut de vérification (pending/verified) est résolu côté serveur : jamais
+ * soumis par le client.
  */
 export const saveMyEducatorProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -205,6 +242,7 @@ export const saveMyEducatorProfile = createServerFn({ method: "POST" })
     const db = supabaseAdmin as any;
     const userId =
       (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+    const userEmail = ((context as any).claims?.email as string | undefined) ?? null;
 
     const normalizedHandle = data.handle?.toLowerCase().trim() || null;
     const normalizedClassCode = data.classCode?.toUpperCase().trim() || null;
@@ -238,6 +276,18 @@ export const saveMyEducatorProfile = createServerFn({ method: "POST" })
       }
     }
 
+    const { data: currentRow } = await db
+      .from("educator_profiles")
+      .select("verification_status")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    // Un statut acquis ne régresse pas lors d'une simple édition de profil.
+    const verificationStatus =
+      currentRow?.verification_status === "verified" || currentRow?.verification_status === "suspended"
+        ? currentRow.verification_status
+        : await resolveVerificationStatus(db, userId, userEmail, data.schoolId || null);
+
     const { data: profile, error } = await db
       .from("educator_profiles")
       .upsert(
@@ -250,6 +300,8 @@ export const saveMyEducatorProfile = createServerFn({ method: "POST" })
           school_id: data.schoolId || null,
           class_code: normalizedClassCode,
           whatsapp_phone: data.whatsappPhone?.trim() || null,
+          verification_status: verificationStatus,
+          is_verified: verificationStatus === "verified",
           updated_at: new Date().toISOString(),
         },
         { onConflict: "user_id" },
@@ -262,7 +314,8 @@ export const saveMyEducatorProfile = createServerFn({ method: "POST" })
       throw new Error(`Impossible d'enregistrer le profil : ${error.message}`);
     }
 
-    // Mettre à jour les métadonnées de l'utilisateur
+    // Métadonnées utilisateur (compteur d'attente exposé au moteur de
+    // contextualisation via getMentorActivationStatus).
     const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
     await supabaseAdmin.auth.admin.updateUserById(userId, {
       user_metadata: {
@@ -455,11 +508,16 @@ export const checkIsActiveEducator = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userId = (context as any).claims?.sub;
 
+    // Un profil suspendu ne donne plus accès à l'espace éducateur (les
+    // délégations actives, elles, restent gérées par révocation admin).
     const { data: profile } = await (supabaseAdmin as any)
       .from("educator_profiles")
-      .select("id")
+      .select("id, verification_status")
       .eq("user_id", userId)
       .limit(1)
       .maybeSingle();
-    return { isEducator: !!profile };
+    return {
+      isEducator: !!profile && profile.verification_status !== "suspended",
+      verificationStatus: profile?.verification_status ?? null,
+    };
   });

@@ -112,6 +112,7 @@ function ProfilePage() {
       professionalRole: string;
       classCode: string | null;
       isVerified?: boolean;
+      verificationStatus?: "pending" | "verified" | "suspended";
     } | null;
     delegatedStudentsCount?: number;
   } | null>(null);
@@ -345,7 +346,11 @@ function ProfilePage() {
       setSuggestName("");
       setSuggestCity("");
       setSuggestIsLeader(false);
-      toast.success("Établissement enregistré et sélectionné !");
+      toast.success(
+        suggestIsLeader
+          ? "Établissement enregistré ! Votre demande de direction sera validée par l'administration."
+          : "Établissement enregistré et sélectionné !",
+      );
     } catch (err: any) {
       toast.error(err?.message || "Erreur lors de l'enregistrement de l'établissement.");
     } finally {
@@ -381,7 +386,7 @@ function ProfilePage() {
     e.preventDefault();
     setSavingEducator(true);
     try {
-      await saveEducatorProfileFn({
+      const saved = await saveEducatorProfileFn({
         data: {
           fullName:
             session?.user.user_metadata?.full_name ||
@@ -395,7 +400,14 @@ function ProfilePage() {
           classCode: educatorClassCode.trim() || undefined,
         },
       });
-      toast.success("Profil professionnel enregistré avec succès !");
+      const status = (saved as any)?.verification_status as string | undefined;
+      if (status === "pending") {
+        toast.success(
+          "Demande envoyée ! Votre espace professionnel sera activé après validation par l'administration Génizio.",
+        );
+      } else {
+        toast.success("Profil professionnel enregistré et activé !");
+      }
       setShowEducatorForm(false);
       await refreshMentorStatus();
       if (mentorStatus?.mode !== "educator") {
@@ -856,7 +868,11 @@ function ProfilePage() {
 
         {/* Right Column: Settings Sections */}
         <div className="min-w-0 lg:col-span-2 space-y-6">
-          {/* Espace Professionnel : Enseignant, Conseiller & École (Sprint B/C) */}
+          {/* Espace Professionnel : Enseignant, Conseiller & École (Sprint B/C).
+              Refonte 2026-09-06 : les utilisateurs sans aucun rôle pro ne
+              voient plus la carte complète — une porte d'entrée compacte les
+              conduit vers une demande d'activation (auto-approuvée si leur
+              e-mail figure dans les habilitations Admin OS). */}
           <div className="rounded-3xl border border-indigo-100 bg-white p-6 shadow-xl md:p-8 space-y-6">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -868,7 +884,9 @@ function ProfilePage() {
                     Espace Professionnel & Orientation
                   </h3>
                   <p className="text-xs text-ink/60 font-semibold">
-                    Enseignants, conseillers d'orientation, psychologues scolaires et écoles.
+                    {mentorStatus?.educatorProfile
+                      ? "Enseignants, conseillers d'orientation, psychologues scolaires et écoles."
+                      : "Réservé aux professionnels de l'éducation activés par Génizio."}
                   </p>
                 </div>
               </div>
@@ -886,6 +904,22 @@ function ProfilePage() {
 
             {mentorStatus?.educatorProfile && !showEducatorForm ? (
               <div className="rounded-2xl border border-indigo-50 bg-indigo-50/40 p-5 space-y-4">
+                {/* Statut d'activation (chaîne d'autorisation Admin OS) */}
+                {mentorStatus.educatorProfile.verificationStatus === "pending" && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-800 flex items-start gap-2">
+                    <Shield className="size-4 shrink-0 text-amber-600" />
+                    Votre espace professionnel est <strong>en attente de validation</strong> par
+                    l'administration Génizio. Il sera activé automatiquement si votre e-mail figure
+                    dans les habilitations, sinon après vérification manuelle.
+                  </div>
+                )}
+                {mentorStatus.educatorProfile.verificationStatus === "suspended" && (
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-bold text-red-700 flex items-start gap-2">
+                    <Shield className="size-4 shrink-0 text-red-600" />
+                    Votre espace professionnel a été <strong>suspendu</strong> — contactez
+                    l'équipe Génizio.
+                  </div>
+                )}
                 <div className="grid gap-3 sm:grid-cols-2 text-sm">
                   <div>
                     <span className="text-[10px] font-extrabold uppercase tracking-wider text-ink/40 block mb-0.5">
@@ -909,10 +943,22 @@ function ProfilePage() {
                       <span className="font-bold text-ink">
                         {mentorStatus.educatorProfile.organizationName || "Non renseigné"}
                       </span>
-                      {mentorStatus.educatorProfile.isVerified && (
+                      {mentorStatus.educatorProfile.verificationStatus === "verified" && (
                         <span className="inline-flex items-center gap-0.5 text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full text-[10px] font-bold border border-emerald-200">
                           <Check className="size-3 text-emerald-600 stroke-[3]" />
                           Vérifié
+                        </span>
+                      )}
+                      {mentorStatus.educatorProfile.verificationStatus === "pending" && (
+                        <span className="inline-flex items-center gap-0.5 text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-full text-[10px] font-bold border border-amber-200">
+                          <Shield className="size-3 text-amber-600" />
+                          En attente
+                        </span>
+                      )}
+                      {mentorStatus.educatorProfile.verificationStatus === "suspended" && (
+                        <span className="inline-flex items-center gap-0.5 text-red-700 bg-red-50 px-1.5 py-0.5 rounded-full text-[10px] font-bold border border-red-200">
+                          <Shield className="size-3 text-red-600" />
+                          Suspendu
                         </span>
                       )}
                     </div>
@@ -957,13 +1003,15 @@ function ProfilePage() {
                   </Link>
                 </div>
               </div>
-            ) : (
+            ) : showEducatorForm ? (
               <form onSubmit={handleSaveEducatorProfile} className="space-y-4">
-                <p className="text-xs text-ink/60 leading-relaxed">
-                  Configurez vos coordonnées professionnelles. Cela active votre{" "}
-                  <strong>Mode Éducateur</strong> et permet aux parents de vous déléguer le suivi
-                  pédagogique de leurs enfants en toute confidentialité.
-                </p>
+                {!mentorStatus?.educatorProfile && (
+                  <p className="text-xs text-ink/60 leading-relaxed">
+                    Configurez vos coordonnées professionnelles. Cela active votre{" "}
+                    <strong>Mode Éducateur</strong> et permet aux parents de vous déléguer le suivi
+                    pédagogique de leurs enfants en toute confidentialité.
+                  </p>
+                )}
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5 sm:col-span-2">
@@ -1195,6 +1243,41 @@ function ProfilePage() {
                   )}
                 </div>
               </form>
+            ) : (
+              /* Porte d'entrée compacte : un utilisateur standard découvre
+                 l'existence des espaces pro sans être noyé sous le formulaire
+                 d'activation — le formulaire s'ouvre explicitement. */
+              <div className="rounded-2xl border border-indigo-50 bg-indigo-50/40 p-5 space-y-3">
+                <p className="text-xs text-ink/60 leading-relaxed">
+                  Vous êtes enseignant, conseiller d'orientation, psychologue scolaire ou chef
+                  d'établissement ? Demandez l'activation de votre espace professionnel :
+                  création de votre profil, @handle professionnel, rattachement à votre
+                  établissement et accès au portail éducation.
+                </p>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowEducatorForm(true)}
+                    className="press-brand rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-xs font-bold flex items-center gap-2 transition-all shadow-xs cursor-pointer"
+                  >
+                    <GraduationCap className="size-4" />
+                    Demander mon espace professionnel
+                  </button>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => setShowEducatorForm(true)}
+                      className="rounded-xl border border-ink/10 bg-white px-4 py-2 text-xs font-bold text-ink/70 hover:text-ink cursor-pointer shadow-2xs"
+                    >
+                      Créer mon profil (admin)
+                    </button>
+                  )}
+                </div>
+                <p className="text-[10px] text-ink/50 font-medium">
+                  L'activation est validée par l'administration Génizio, ou immédiate si votre
+                  e-mail professionnel figure dans les habilitations de votre établissement.
+                </p>
+              </div>
             )}
           </div>
 
@@ -1474,15 +1557,16 @@ function ProfilePage() {
                 </select>
               </div>
 
-              <label className="flex items-center gap-2 pt-1 cursor-pointer">
+              <label className="flex items-start gap-2 pt-1 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={suggestIsLeader}
                   onChange={(e) => setSuggestIsLeader(e.target.checked)}
-                  className="rounded border-ink/20 text-indigo-600 focus:ring-indigo-500"
+                  className="mt-0.5 rounded border-ink/20 text-indigo-600 focus:ring-indigo-500"
                 />
                 <span className="text-[11px] text-ink/70 font-semibold">
-                  Je suis le Directeur ou Responsable de cet établissement
+                  Je dirige cet établissement — envoyer une demande de rôle « Chef
+                  d'établissement » (soumise à validation par l'administration Génizio)
                 </span>
               </label>
 

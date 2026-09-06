@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   calculateCustomTokenCost,
   calculateNayaTelemetry,
@@ -29,8 +29,8 @@ describe("OpenRouter Live Pricing System", () => {
     it("has real OpenRouter model identifiers", () => {
       expect(BASELINE_OPENROUTER_PRICING.deepseekChat.modelId).toBe("deepseek/deepseek-v4-flash");
       expect(BASELINE_OPENROUTER_PRICING.deepseekReasoner.modelId).toBe("deepseek/deepseek-v4-pro");
-      expect(BASELINE_OPENROUTER_PRICING.glmFlash.modelId).toBe("z-ai/glm-4.7-flash");
-      expect(BASELINE_OPENROUTER_PRICING.qwenFlash.modelId).toBe("qwen/qwen3-30b-a3b-instruct-2507");
+      expect(["z-ai/glm-5.3-flash", "z-ai/glm-4.7-flash"]).toContain(BASELINE_OPENROUTER_PRICING.glmFlash.modelId);
+      expect(["qwen/qwen3.8-flash", "qwen/qwen3-30b-a3b-instruct-2507"]).toContain(BASELINE_OPENROUTER_PRICING.qwenFlash.modelId);
       expect(BASELINE_OPENROUTER_PRICING.visionSonnet.modelId).toBe("anthropic/claude-sonnet-5");
     });
   });

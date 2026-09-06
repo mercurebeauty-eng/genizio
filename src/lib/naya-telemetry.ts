@@ -450,17 +450,29 @@ export function calculateNayaTelemetry(
   const recChatInput = recCount * 1000;
   const recChatOutput = recCount * 500;
 
+  const activeModel = raw.activeChallengeModel || "deepseek-v4-flash";
+  const isGlmDefis = activeModel === "glm-5.3-flash";
+  const isQwenDefis = activeModel === "qwen3.8-flash";
+  const isDeepSeekDefis = !isGlmDefis && !isQwenDefis;
+
+  const glmTeacherInput = Math.max(0, raw.glmFlashTokens?.input ?? 0);
+  const glmTeacherOutput = Math.max(0, raw.glmFlashTokens?.output ?? 0);
+  const glmTeacherTokens = glmTeacherInput + glmTeacherOutput;
+
+  const qwenExtraInput = Math.max(0, raw.qwenFlashTokens?.input ?? 0);
+  const qwenExtraOutput = Math.max(0, raw.qwenFlashTokens?.output ?? 0);
+
   const tokenUsage: NayaTokenUsage = {
-    deepseekChatInputTokens: defisChatInput + recChatInput,
-    deepseekChatOutputTokens: defisChatOutput + recChatOutput,
+    deepseekChatInputTokens: (isDeepSeekDefis ? defisChatInput : 0) + recChatInput,
+    deepseekChatOutputTokens: (isDeepSeekDefis ? defisChatOutput : 0) + recChatOutput,
     deepseekReasonerInputTokens: hypReasonerInput,
     deepseekReasonerOutputTokens: hypReasonerOutput,
     visionSonnetInputTokens: defisVisionInput,
     visionSonnetOutputTokens: defisVisionOutput,
-    glmFlashInputTokens: Math.max(0, raw.glmFlashTokens?.input ?? 0),
-    glmFlashOutputTokens: Math.max(0, raw.glmFlashTokens?.output ?? 0),
-    qwenFlashInputTokens: Math.max(0, raw.qwenFlashTokens?.input ?? 0),
-    qwenFlashOutputTokens: Math.max(0, raw.qwenFlashTokens?.output ?? 0),
+    glmFlashInputTokens: (isGlmDefis ? defisChatInput : 0) + glmTeacherInput,
+    glmFlashOutputTokens: (isGlmDefis ? defisChatOutput : 0) + glmTeacherOutput,
+    qwenFlashInputTokens: (isQwenDefis ? defisChatInput : 0) + qwenExtraInput,
+    qwenFlashOutputTokens: (isQwenDefis ? defisChatOutput : 0) + qwenExtraOutput,
   };
 
   const totalChatTokens = tokenUsage.deepseekChatInputTokens + tokenUsage.deepseekChatOutputTokens;
@@ -573,7 +585,6 @@ export function calculateNayaTelemetry(
     glmCosts.costXof +
     qwenCosts.costXof;
 
-  const activeModel = raw.activeChallengeModel || "deepseek-v4-flash";
   const defisChatCosts =
     activeModel === "glm-5.3-flash"
       ? livePricing
@@ -632,6 +643,15 @@ export function calculateNayaTelemetry(
       )
     : calculateDeepSeekChatCost(recChatInput, recChatOutput);
 
+  const copiloteCosts = livePricing
+    ? calculateCustomTokenCost(
+        glmTeacherInput,
+        glmTeacherOutput,
+        livePricing.glmFlash.inputPerM,
+        livePricing.glmFlash.outputPerM,
+      )
+    : calculateGlmFlashCost(glmTeacherInput, glmTeacherOutput);
+
   const glmFlashCalls = Math.max(0, raw.glmFlashTokens?.calls ?? 0);
   const totalApiCalls = genCount + photoProofCount + hypCount + recCount + glmFlashCalls;
   const conversionRatePct = calculateNayaConversionRate(genCount, compCount);
@@ -674,9 +694,9 @@ export function calculateNayaTelemetry(
       feature: "Copilote Professeur" as const,
       callsCount: glmFlashCalls,
       modelUsed: "GLM 5.3 Flash" as const,
-      estimatedTokens: totalGlmTokens,
-      costUsd: glmCosts.costUsd,
-      costXof: glmCosts.costXof,
+      estimatedTokens: glmTeacherTokens,
+      costUsd: copiloteCosts.costUsd,
+      costXof: copiloteCosts.costXof,
     },
   ];
 

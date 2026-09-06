@@ -1708,6 +1708,81 @@ export const getChildMentorInfo = createServerFn({ method: "GET" })
     };
   });
 
+// ── Journal d'activité réel du mentor (veto éclairé du parent) ────────────────
+// mentor_actions trace ce que le mentor a FAIT (démarrage, progression, preuve,
+// non réussi, génération) — indépendamment de ce qu'il déclare. Le hub parent
+// l'affiche à côté de la validation des séances : le parent confirme ou conteste
+// en connaissance de cause. Ownership parent strict (le mentor a déjà son
+// propre dashboard).
+const ChildMentorActivityInput = z.object({ childId: z.string().uuid() });
+
+export const getChildMentorActivity = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => ChildMentorActivityInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const userId = (context as any).claims?.sub;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: child } = await supabaseAdmin
+      .from("child_profiles")
+      .select("id, user_id")
+      .eq("id", data.childId)
+      .maybeSingle();
+    if (!child || child.user_id !== userId) throw new Error("Accès refusé.");
+
+    const { data: actions } = await (supabaseAdmin as any)
+      .from("mentor_actions")
+      .select("id, mentor_user_id, challenge_id, action, payload, created_at")
+      .eq("child_profile_id", data.childId)
+      .order("created_at", { ascending: false })
+      .limit(15);
+
+    if (!actions || actions.length === 0) return [];
+
+    // Noms des mentors (escouade possible) et titres des défis concernés — deux
+    // lectures groupées, jamais une requête par ligne.
+    const mentorIds: string[] = [
+      ...new Set<string>(actions.map((a: any) => a.mentor_user_id as string)),
+    ];
+    const challengeIds: string[] = [
+      ...new Set<string>(
+        actions
+          .map((a: any) => a.challenge_id as string | null)
+          .filter((id: string | null): id is string => Boolean(id)),
+      ),
+    ];
+
+    const { data: mentorProfiles } = await supabaseAdmin
+      .from("parent_profiles")
+      .select("user_id, email, display_name")
+      .in("user_id", mentorIds);
+    const mentorNameById = new Map<string, string>();
+    for (const p of mentorProfiles ?? []) {
+      mentorNameById.set(
+        p.user_id,
+        p.display_name || (p.email ? p.email.split("@")[0] : "Mentor"),
+      );
+    }
+
+    let titleById = new Map<string, string>();
+    if (challengeIds.length > 0) {
+      const { data: rows } = await (supabaseAdmin as any)
+        .from("challenges")
+        .select("id, title")
+        .in("id", challengeIds);
+      titleById = new Map((rows ?? []).map((r: any) => [r.id, r.title as string]));
+    }
+
+    return actions.map((a: any) => ({
+      id: a.id as string,
+      action: a.action as string,
+      payload: (a.payload ?? {}) as Record<string, unknown>,
+      createdAt: a.created_at as string,
+      mentorName: mentorNameById.get(a.mentor_user_id) ?? "Mentor",
+      challengeTitle: a.challenge_id ? (titleById.get(a.challenge_id) ?? null) : null,
+    }));
+  });
+
 // ── Vue mentor : liste de ses enfants assignés ──
 export const getMentorDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -1780,7 +1855,7 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
     const { data: challenges } = await supabaseAdmin
       .from("challenges")
       .select(
-        "child_id, id, title, domain, status, created_at, description, duration, steps, materials, proof_image_url, ai_observations, notes, difficulty, pedagogical_context, challenge_role, target_cause, recommendation_type, reformulation_of, presentation_mode, requires_supervision, supervision_warning",
+        "child_id, id, title, domain, status, progress, kind, guidance_level, not_completed_reason, created_at, description, duration, steps, materials, proof_image_url, ai_observations, notes, difficulty, pedagogical_context, challenge_role, target_cause, recommendation_type, reformulation_of, presentation_mode, requires_supervision, supervision_warning",
       )
       .in("child_id", childIds)
       .is("deleted_at", null)
@@ -1885,22 +1960,6 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
     );
     const accompanimentByChild = new Map(accompanimentResults);
 
-    // Journal de séance du mentor (action 'notes' et autres) — les dernières actions
-    // par enfant, pour l'affichage des notes dans la modale de détail.
-    const { data: recentActions } = await (supabaseAdmin as any)
-      .from("mentor_actions")
-      .select("id, child_profile_id, challenge_id, action, payload, created_at")
-      .eq("mentor_user_id", userId)
-      .in("child_profile_id", childIds)
-      .order("created_at", { ascending: false })
-      .limit(60);
-    const actionsByChild = new Map<string, any[]>();
-    for (const act of recentActions ?? []) {
-      const list = actionsByChild.get(act.child_profile_id) ?? [];
-      if (list.length < 10) list.push(act);
-      actionsByChild.set(act.child_profile_id, list);
-    }
-
     return {
       score,
       sessionsThisMonth: monthSessions?.length ?? 0,
@@ -1928,7 +1987,6 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
           parentPhone: phoneByUserId.get(child?.user_id) ?? null,
           assignedAt: a.created_at as string,
           accompaniment: accompanimentByChild.get(a.child_profile_id)?.funding ?? "none",
-          mentorActions: actionsByChild.get(a.child_profile_id) ?? [],
           challenges: (challenges ?? []).filter((c) => c.child_id === a.child_profile_id),
         };
       }),
@@ -2210,6 +2268,10 @@ export const getMentorActivationStatus = createServerFn({ method: "GET" })
             professionalRole: educatorProfile.professional_role,
             classCode: educatorProfile.class_code,
             isVerified: educatorProfile.is_verified,
+            // Moteur de contextualisation (settings) : pending/verified/suspended.
+            verificationStatus:
+              educatorProfile.verification_status ??
+              (educatorProfile.is_verified ? "verified" : "pending"),
           }
         : null,
       delegatedStudentsCount: delegationsCount ?? 0,
@@ -2252,9 +2314,15 @@ export const setMentorMode = createServerFn({ method: "POST" })
     if (data.mode === "educator") {
       const { data: educatorProfile } = await (supabaseAdmin as any)
         .from("educator_profiles")
-        .select("id")
+        .select("id, verification_status")
         .eq("user_id", userId)
         .maybeSingle();
+
+      if (educatorProfile?.verification_status === "suspended") {
+        throw new Error(
+          "Votre espace professionnel a été suspendu par l'administration — contactez l'équipe Génizio.",
+        );
+      }
 
       const userEmail = (context as any).claims?.email?.toLowerCase();
       const { count: delegationsCount } = await (supabaseAdmin as any)

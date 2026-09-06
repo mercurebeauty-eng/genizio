@@ -32,11 +32,13 @@ export interface SchoolItem {
   pricingTier: SchoolPricingTier;
   licensedStudentsQuota: number;
   licenseValidUntil: string | null;
+  licensePaid: boolean;
   sponsorCampaignId: string | null;
   createdAt: string;
   updatedAt: string;
   educatorsCount?: number;
   classesCount?: number;
+  activeStudentsCount?: number;
 }
 
 export interface MySchoolOverview {
@@ -130,13 +132,61 @@ export function formatSchoolCode(code: string): string {
   return trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
 }
 
+/**
+ * Désaccentue une chaîne (miroir JS de genizio_unaccent en base). Sert à
+ * normaliser la requête avant filtrage sur schools.search_text (colonne
+ * générée désaccentuée, indexée trigram).
+ */
+export function stripAccents(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/œ/gi, "o")
+    .replace(/æ/gi, "a");
+}
+
+/**
+ * Règle métier : calcul de conformité des quotas d'un établissement
+ * (previously defined only in schools.test.ts — never enforced).
+ */
+export function evaluateCampusLicense(school: {
+  status: string;
+  pricingTier: string;
+  licensedStudentsQuota: number;
+  licenseValidUntil?: string | null;
+  activeStudentsCount: number;
+}): {
+  isOverQuota: boolean;
+  remainingSlots: number;
+  hasActiveCampusPass: boolean;
+} {
+  const isExpired = school.licenseValidUntil
+    ? new Date(school.licenseValidUntil).getTime() < Date.now()
+    : false;
+
+  const hasActiveCampusPass =
+    (school.status === "partner_campus" || school.pricingTier !== "free") && !isExpired;
+
+  const quota = school.licensedStudentsQuota ?? 0;
+  const remainingSlots = Math.max(0, quota - school.activeStudentsCount);
+  const isOverQuota = quota > 0 && school.activeStudentsCount > quota;
+
+  return {
+    isOverQuota,
+    remainingSlots,
+    hasActiveCampusPass,
+  };
+}
+
 const SearchSchoolsInputSchema = z.object({
   query: z.string().optional().default(""),
   limit: z.number().optional().default(20),
 });
 
 /**
- * Autocomplete & Recherche d'établissements scolaires (insensible à la casse et aux accents).
+ * Autocomplete & Recherche d'établissements scolaires (insensible à la casse
+ * ET aux accents — filtre sur schools.search_text, colonne générée
+ * désaccentuée + index trigram).
  */
 export const searchSchools = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -151,10 +201,13 @@ export const searchSchools = createServerFn({ method: "GET" })
     let queryBuilder = db.from("schools").select("*").neq("status", "archived").limit(limit);
 
     if (cleanQuery.length >= 2) {
-      const lower = cleanQuery.toLowerCase();
-      const upper = cleanQuery.toUpperCase();
+      // La requête passe par la même désaccentuation que la colonne : « Ecole »
+      // trouve « École ». Le upper() du code ne sert plus (search_text est
+      // lower()) ; on matche aussi sans le '#'.
+      const normalized = stripAccents(cleanQuery).toLowerCase();
+      const noHash = normalized.replace(/#/g, "");
       queryBuilder = queryBuilder.or(
-        `name.ilike.%${lower}%,city.ilike.%${lower}%,code.ilike.%${upper}%,slug.ilike.%${lower}%`,
+        `search_text.ilike.%${normalized}%,search_text.ilike.%${noHash}%`,
       );
     } else {
       queryBuilder = queryBuilder
@@ -207,6 +260,31 @@ const SuggestSchoolInputSchema = z.object({
 });
 
 /**
+ * Crée une demande de rôle « Chef d'établissement » en attente de validation
+ * admin. Idempotent : l'index unique partiel (user_id) WHERE status='pending'
+ * absorbe les doublons — une erreur ici n'empêche jamais la sélection de
+ * l'établissement (la demande de direction est secondaire).
+ */
+async function maybeCreateLeaderRequest(
+  db: any,
+  userId: string,
+  schoolId: string,
+  isLeader: boolean,
+): Promise<void> {
+  if (!isLeader) return;
+  try {
+    const { error } = await db.from("school_leader_requests").insert({
+      school_id: schoolId,
+      user_id: userId,
+      note: "Demande émise à la déclaration de l'établissement.",
+    });
+    if (error) console.warn("Demande de direction non créée (déjà en attente ?) :", error.message);
+  } catch (err) {
+    console.warn("maybeCreateLeaderRequest échec :", err);
+  }
+}
+
+/**
  * Permet à un enseignant ou conseiller d'enregistrer son établissement
  * s'il n'existe pas encore (statut "community" par défaut, déduplication automatique).
  */
@@ -232,6 +310,9 @@ export const suggestSchool = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (existing) {
+      // Souveraineté : l'auto-proclamation de direction ne confère plus
+      // leader_user_id — elle crée une demande à valider par l'admin.
+      await maybeCreateLeaderRequest(db, userId, existing.id, data.isLeader);
       return {
         id: existing.id,
         name: existing.name,
@@ -249,6 +330,7 @@ export const suggestSchool = createServerFn({ method: "POST" })
         pricingTier: existing.pricing_tier,
         licensedStudentsQuota: existing.licensed_students_quota ?? 0,
         licenseValidUntil: existing.license_valid_until,
+        licensePaid: existing.license_paid ?? false,
         sponsorCampaignId: existing.sponsor_campaign_id,
         createdAt: existing.created_at,
         updatedAt: existing.updated_at,
@@ -268,6 +350,7 @@ export const suggestSchool = createServerFn({ method: "POST" })
     }
 
     // 3. Insertion de l'établissement communautaire
+    // (leader_user_id jamais posé ici : la direction passe par validation.)
     const { data: created, error } = await db
       .from("schools")
       .insert({
@@ -281,7 +364,7 @@ export const suggestSchool = createServerFn({ method: "POST" })
         status: "community",
         pricing_tier: "free",
         licensed_students_quota: 0,
-        leader_user_id: data.isLeader ? userId : null,
+        leader_user_id: null,
       })
       .select("*")
       .single();
@@ -292,6 +375,8 @@ export const suggestSchool = createServerFn({ method: "POST" })
         `Impossible d'enregistrer l'établissement : ${error?.message || "Erreur serveur"}`,
       );
     }
+
+    await maybeCreateLeaderRequest(db, userId, created.id, data.isLeader);
 
     return {
       id: created.id,
@@ -310,6 +395,7 @@ export const suggestSchool = createServerFn({ method: "POST" })
       pricingTier: created.pricing_tier,
       licensedStudentsQuota: created.licensed_students_quota ?? 0,
       licenseValidUntil: created.license_valid_until,
+      licensePaid: created.license_paid ?? false,
       sponsorCampaignId: created.sponsor_campaign_id,
       createdAt: created.created_at,
       updatedAt: created.updated_at,
@@ -418,6 +504,7 @@ export const getMySchoolOverview = createServerFn({ method: "GET" })
           pricingTier: schoolRow.pricing_tier,
           licensedStudentsQuota: schoolRow.licensed_students_quota ?? 0,
           licenseValidUntil: schoolRow.license_valid_until,
+          licensePaid: schoolRow.license_paid ?? false,
           sponsorCampaignId: schoolRow.sponsor_campaign_id,
           createdAt: schoolRow.created_at,
           updatedAt: schoolRow.updated_at,
@@ -454,9 +541,14 @@ export const listSchoolsAdmin = createServerFn({ method: "GET" })
     }
 
     const { data: educators } = await db.from("educator_profiles").select("school_id, class_code");
+    const { data: childSchools } = await db
+      .from("child_schools")
+      .select("school_id")
+      .eq("status", "active");
 
     const educatorCountMap = new Map<string, number>();
     const classesCountMap = new Map<string, Set<string>>();
+    const studentsCountMap = new Map<string, number>();
 
     for (const edu of educators ?? []) {
       if (edu.school_id) {
@@ -468,6 +560,9 @@ export const listSchoolsAdmin = createServerFn({ method: "GET" })
           classesCountMap.get(edu.school_id)!.add(edu.class_code.toUpperCase());
         }
       }
+    }
+    for (const cs of childSchools ?? []) {
+      studentsCountMap.set(cs.school_id, (studentsCountMap.get(cs.school_id) ?? 0) + 1);
     }
 
     return schools.map((s: any) => ({
@@ -487,11 +582,13 @@ export const listSchoolsAdmin = createServerFn({ method: "GET" })
       pricingTier: s.pricing_tier,
       licensedStudentsQuota: s.licensed_students_quota ?? 0,
       licenseValidUntil: s.license_valid_until,
+      licensePaid: s.license_paid ?? false,
       sponsorCampaignId: s.sponsor_campaign_id,
       createdAt: s.created_at,
       updatedAt: s.updated_at,
       educatorsCount: educatorCountMap.get(s.id) ?? 0,
       classesCount: classesCountMap.get(s.id)?.size ?? 0,
+      activeStudentsCount: studentsCountMap.get(s.id) ?? 0,
     }));
   });
 
@@ -503,6 +600,7 @@ const CreateSchoolAdminSchema = z.object({
   status: z.enum(["community", "verified", "partner_campus", "archived"]).default("verified"),
   pricingTier: z.enum(["free", "pilot", "standard_campus", "sponsored"]).default("free"),
   licensedStudentsQuota: z.number().min(0).default(0),
+  licensePaid: z.boolean().optional().default(false),
   address: z.string().optional(),
   contactEmail: z.string().email().optional().or(z.literal("")),
   contactPhone: z.string().optional(),
@@ -537,6 +635,7 @@ export const createSchoolAdmin = createServerFn({ method: "POST" })
         status: data.status,
         pricing_tier: data.pricingTier,
         licensed_students_quota: data.licensedStudentsQuota,
+        license_paid: data.licensePaid,
         address: data.address?.trim() || null,
         contact_email: data.contactEmail?.trim() || null,
         contact_phone: data.contactPhone?.trim() || null,
@@ -569,6 +668,7 @@ export const createSchoolAdmin = createServerFn({ method: "POST" })
       pricingTier: created.pricing_tier,
       licensedStudentsQuota: created.licensed_students_quota ?? 0,
       licenseValidUntil: created.license_valid_until,
+      licensePaid: created.license_paid ?? false,
       sponsorCampaignId: created.sponsor_campaign_id,
       createdAt: created.created_at,
       updatedAt: created.updated_at,
@@ -585,6 +685,13 @@ const UpdateSchoolAdminSchema = z.object({
   status: z.enum(["community", "verified", "partner_campus", "archived"]).optional(),
   pricingTier: z.enum(["free", "pilot", "standard_campus", "sponsored"]).optional(),
   licensedStudentsQuota: z.number().min(0).optional(),
+  licensePaid: z.boolean().optional(),
+  // Date simple « YYYY-MM-DD » (input type=date) normalisée en ISO côté handler.
+  licenseValidUntil: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .optional(),
   address: z.string().optional().nullable(),
   contactEmail: z.string().optional().nullable(),
   contactPhone: z.string().optional().nullable(),
@@ -616,6 +723,17 @@ export const updateSchoolAdmin = createServerFn({ method: "POST" })
     if (data.pricingTier !== undefined) updatePayload.pricing_tier = data.pricingTier;
     if (data.licensedStudentsQuota !== undefined)
       updatePayload.licensed_students_quota = data.licensedStudentsQuota;
+    if (data.licensePaid !== undefined) {
+      updatePayload.license_paid = data.licensePaid;
+      // Traçabilité de l'encaissement : la pose manuelle de « payée » date la
+      // licence ; la remise en « impayée » conserve l'historique (license_paid_at).
+      if (data.licensePaid) updatePayload.license_paid_at = new Date().toISOString();
+    }
+    if (data.licenseValidUntil !== undefined) {
+      updatePayload.license_valid_until = data.licenseValidUntil
+        ? new Date(`${data.licenseValidUntil}T23:59:59.999Z`).toISOString()
+        : null;
+    }
     if (data.address !== undefined) updatePayload.address = data.address?.trim() || null;
     if (data.contactEmail !== undefined)
       updatePayload.contact_email = data.contactEmail?.trim() || null;
@@ -669,6 +787,7 @@ export const updateSchoolAdmin = createServerFn({ method: "POST" })
       pricingTier: updated.pricing_tier,
       licensedStudentsQuota: updated.licensed_students_quota ?? 0,
       licenseValidUntil: updated.license_valid_until,
+      licensePaid: updated.license_paid ?? false,
       sponsorCampaignId: updated.sponsor_campaign_id,
       createdAt: updated.created_at,
       updatedAt: updated.updated_at,

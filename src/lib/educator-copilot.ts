@@ -222,6 +222,7 @@ const FICHE_JSON_SPEC = `Réponds UNIQUEMENT avec le JSON brut de la fiche (aucu
 }`;
 
 const COPILOT_PRINCIPLES = `PRINCIPES GÉNIZIO POUR LES FICHES PROFESSEUR (stricts) :
+- PÉRIMÈTRE PÉDAGOGIQUE UNIQUEMENT : le Copilote est un outil spécialisé dans l'apprentissage et la pédagogie — pas un moteur universel de génération. Si la SOURCE ne correspond pas à un contenu d'enseignement (discipline scolaire, notion, exercice, leçon, évaluation, gestion de classe, orientation scolaire), réponds UNIQUEMENT {"out_of_scope": true, "redirect": "<1 phrase expliquant que le Copilote est spécialisé pédagogie et renvoyant vers un assistant généraliste type ChatGPT ou Gemini>"}. Jamais de fiche pour une demande hors périmètre.
 - ZÉRO ÉCRAN POUR L'ÉLÈVE : aucune activité ne doit demander à un élève d'utiliser un téléphone, un ordinateur ou une tablette. Le matériel est physique, le tableau est le seul support visuel collectif.
 - ANCRAGE LOCAL RÉEL : le métier de "local_anchor" doit exister dans le contexte géographique indiqué (urbanisme, artisanat, commerce, énergie, agriculture, numérique) — jamais un exemple générique importé.
 - MATÉRIEL ACCESSIBLE : chaque activité doit être réalisable avec des objets du quotidien local (ficelle, papier, bouteilles, tissus, cailloux, craie, marché) — rien de coûteux ni introuvable.
@@ -303,6 +304,31 @@ ${FICHE_JSON_SPEC}`;
 }
 
 // ── Extraction & parse déterministes ────────────────────────────────────────
+
+/**
+ * Détecte l'auto-refus de périmètre du modèle (contrat « out_of_scope ») :
+ * renvoie le message de redirection si la demande n'est pas pédagogique,
+ * sinon null. Pur et testable — appelé avant parseLessonFiche ET après un
+ * pré-check LLM dédié (double barrière, le refus ne consomme pas de fiche).
+ */
+export function extractOutOfScope(raw: string): string | null {
+  try {
+    const parsed = JSON.parse(extractJsonBlock(raw)) as {
+      out_of_scope?: boolean;
+      redirect?: string;
+    };
+    if (parsed && parsed.out_of_scope === true) {
+      return (
+        parsed.redirect?.trim() ||
+        "Le Copilote est spécialisé dans la pédagogie : un assistant généraliste comme ChatGPT ou Gemini sera plus adapté à cette demande."
+      );
+    }
+    return null;
+  } catch {
+    // Pas de JSON exploitable (ou réponse partielle) : ce n'est pas un refus.
+    return null;
+  }
+}
 
 /** Extrait le premier objet JSON d'une réponse LLM (gère les fences ```json). */
 export function extractJsonBlock(raw: string): string {

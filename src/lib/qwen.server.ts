@@ -175,7 +175,7 @@ export async function callQwen(
       attempt++;
 
       const isFatal =
-        (err.message && err.message.includes("Fatal")) ||
+        (err.message && (err.message.includes("Fatal") || err.message.includes("429"))) ||
         err instanceof QwenMissingKeyError;
       if (attempt >= maxRetries || isFatal) {
         throw err;

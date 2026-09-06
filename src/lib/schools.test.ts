@@ -1,37 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { slugify, generateSchoolCode, formatSchoolCode } from "./schools.functions";
-
-/**
- * Règle métier : calcul de conformité des quotas d'un établissement
- */
-export function evaluateCampusLicense(school: {
-  status: string;
-  pricingTier: string;
-  licensedStudentsQuota: number;
-  licenseValidUntil?: string | null;
-  activeStudentsCount: number;
-}): {
-  isOverQuota: boolean;
-  remainingSlots: number;
-  hasActiveCampusPass: boolean;
-} {
-  const isExpired = school.licenseValidUntil
-    ? new Date(school.licenseValidUntil).getTime() < Date.now()
-    : false;
-
-  const hasActiveCampusPass =
-    (school.status === "partner_campus" || school.pricingTier !== "free") && !isExpired;
-
-  const quota = school.licensedStudentsQuota ?? 0;
-  const remainingSlots = Math.max(0, quota - school.activeStudentsCount);
-  const isOverQuota = quota > 0 && school.activeStudentsCount > quota;
-
-  return {
-    isOverQuota,
-    remainingSlots,
-    hasActiveCampusPass,
-  };
-}
+import {
+  slugify,
+  generateSchoolCode,
+  formatSchoolCode,
+  evaluateCampusLicense,
+  stripAccents,
+} from "./schools.functions";
 
 describe("Génizio Campus - Logique Métier Établissements & Écoles", () => {
   describe("slugify", () => {
@@ -84,6 +58,14 @@ describe("Génizio Campus - Logique Métier Établissements & Écoles", () => {
     it("préserve le dièse s'il est déjà présent", () => {
       expect(formatSchoolCode("#CSV-OUAGA")).toBe("#CSV-OUAGA");
       expect(formatSchoolCode("  #LCA-ABIDJAN  ")).toBe("#LCA-ABIDJAN");
+    });
+  });
+
+  describe("stripAccents (recherche d'établissements)", () => {
+    it("désaccentue et normalise les requêtes françaises", () => {
+      expect(stripAccents("École Élémentaire")).toBe("Ecole Elementaire");
+      expect(stripAccents("Lycée Classique d'Abidjan")).toBe("Lycee Classique d'Abidjan");
+      expect(stripAccents("Génizio")).toBe("Genizio");
     });
   });
 

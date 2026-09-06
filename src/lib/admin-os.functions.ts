@@ -1103,32 +1103,36 @@ export interface AiProviderStatus {
   qwenConfigured: boolean;
 }
 
+export function computeAiProviderStatus(): AiProviderStatus {
+  const glmDirectOk = !!(
+    process.env.GLM_API_KEY ||
+    process.env.ZHIPU_API_KEY ||
+    process.env.ZHIPUAI_API_KEY ||
+    process.env.BIGMODEL_API_KEY ||
+    process.env.BAI_API_KEY
+  );
+  const qwenDirectOk = !!(
+    process.env.QWEN_API_KEY ||
+    process.env.DASHSCOPE_API_KEY
+  );
+  const sharedOk = glmDirectOk || qwenDirectOk;
+
+  return {
+    deepseekConfigured: !!process.env.DEEPSEEK_API_KEY,
+    anthropicConfigured: !!process.env.ANTHROPIC_API_KEY,
+    geminiConfigured: !!process.env.GEMINI_API_KEY,
+    glmConfigured: sharedOk,
+    qwenConfigured: sharedOk,
+  };
+}
+
 // Simple check de présence des clés API (jamais leur valeur) — pour que l'admin
 // voie immédiatement si DEEPSEEK_API_KEY, GLM_API_KEY, QWEN_API_KEY, etc. sont bien réglées sur
 // cet environnement, sans avoir à ouvrir .env/Vercel.
 export const getAiProviderStatusAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async (): Promise<AiProviderStatus> => {
-    const glmOk = !!(
-      process.env.GLM_API_KEY ||
-      process.env.ZHIPU_API_KEY ||
-      process.env.ZHIPUAI_API_KEY ||
-      process.env.BIGMODEL_API_KEY ||
-      process.env.BAI_API_KEY
-    );
-    const qwenOk = !!(
-      process.env.QWEN_API_KEY ||
-      process.env.DASHSCOPE_API_KEY ||
-      glmOk // api.b.ai partage la clé pour Qwen et GLM
-    );
-
-    return {
-      deepseekConfigured: !!process.env.DEEPSEEK_API_KEY,
-      anthropicConfigured: !!process.env.ANTHROPIC_API_KEY,
-      geminiConfigured: !!process.env.GEMINI_API_KEY,
-      glmConfigured: glmOk,
-      qwenConfigured: qwenOk,
-    };
+    return computeAiProviderStatus();
   });
 
 export type ChallengeModelId = "deepseek-v4-flash" | "glm-5.3-flash" | "qwen3.8-flash";
@@ -1158,8 +1162,8 @@ export const CHALLENGE_MODEL_OPTIONS: ChallengeModelOption[] = [
     label: "GLM 5.3 Flash",
     provider: "Zhipu AI (OpenRouter / api.b.ai)",
     description: "Haute réactivité & multimodalité",
-    inputPricePerM: 0.06,
-    outputPricePerM: 0.4,
+    inputPricePerM: 0.075,
+    outputPricePerM: 0.25,
     color: "emerald",
   },
   {
@@ -1194,8 +1198,8 @@ export function getChallengeModelOptions(
       label: "GLM 5.3 Flash",
       provider: "Zhipu AI (OpenRouter / api.b.ai)",
       description: "Haute réactivité & multimodalité",
-      inputPricePerM: livePricing?.glmFlash?.inputPerM ?? 0.06,
-      outputPricePerM: livePricing?.glmFlash?.outputPerM ?? 0.4,
+      inputPricePerM: livePricing?.glmFlash?.inputPerM ?? 0.075,
+      outputPricePerM: livePricing?.glmFlash?.outputPerM ?? 0.25,
       color: "emerald",
     },
     {
@@ -1343,11 +1347,6 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
         supabaseAdmin
           .from("generation_audits")
           .select("kind, verdict, violations, semantic_checked, regenerated"),
-        supabaseAdmin
-          .from("admin_naya_settings")
-          .select("challenge_model")
-          .eq("id", "singleton")
-          .maybeSingle(),
       ]);
 
     if (genRes.error) throw new Error(genRes.error.message);
@@ -1371,8 +1370,9 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
       return null;
     });
 
-    const activeChallengeModel =
-      (nayaSettingsRes?.data?.challenge_model as any) || "deepseek-v4-flash";
+    const { getNayaModelRoutingSettings } = await import("@/lib/naya-routing.server");
+    const routingSettings = await getNayaModelRoutingSettings(supabaseAdmin).catch(() => null);
+    const activeChallengeModel = routingSettings?.challengeModel || "deepseek-v4-flash";
 
     const telemetry = calculateNayaTelemetry(
       {

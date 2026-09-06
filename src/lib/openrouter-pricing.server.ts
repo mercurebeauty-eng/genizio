@@ -19,16 +19,16 @@ export const BASELINE_OPENROUTER_PRICING: LiveOpenRouterPricing = {
     name: "DeepSeek V4 Pro",
   },
   glmFlash: {
-    inputPerM: 0.06,
-    outputPerM: 0.4,
-    modelId: "z-ai/glm-4.7-flash",
-    name: "GLM Flash",
+    inputPerM: 0.075,
+    outputPerM: 0.25,
+    modelId: "z-ai/glm-5.3-flash",
+    name: "GLM 5.3 Flash",
   },
   qwenFlash: {
     inputPerM: 0.0481,
     outputPerM: 0.193,
-    modelId: "qwen/qwen3-30b-a3b-instruct-2507",
-    name: "Qwen 3 Flash",
+    modelId: "qwen/qwen3.8-flash",
+    name: "Qwen 3.8 Flash",
   },
   visionSonnet: {
     inputPerM: 2.0,
@@ -89,7 +89,12 @@ export async function getLiveOpenRouterPricing(forceRefresh = false): Promise<Li
 
     if (!res.ok) {
       console.warn(`[openrouter-pricing] Échec HTTP ${res.status}, utilisation du cache/repli.`);
-      return cachedPricing ?? BASELINE_OPENROUTER_PRICING;
+      const fallback = cachedPricing
+        ? { ...cachedPricing, isLive: false, source: "cached" as const }
+        : { ...BASELINE_OPENROUTER_PRICING, isLive: false, source: "baseline_fallback" as const };
+      cachedPricing = fallback;
+      cacheTimestamp = now;
+      return fallback;
     }
 
     const json = (await res.json()) as { data?: OpenRouterRawModel[] };
@@ -116,15 +121,24 @@ export async function getLiveOpenRouterPricing(forceRefresh = false): Promise<Li
 
     // Recherche par priorité d'identifiants sur OpenRouter
     const deepseekChat =
-      findModel(["deepseek/deepseek-v4-flash", "deepseek/deepseek-chat"]) ??
-      BASELINE_OPENROUTER_PRICING.deepseekChat;
+      findModel([
+        "deepseek/deepseek-v4-flash",
+        "deepseek/deepseek-v4-flash-0731",
+        "deepseek/deepseek-v4-flash-latest",
+        "deepseek/deepseek-chat",
+      ]) ?? BASELINE_OPENROUTER_PRICING.deepseekChat;
 
     const deepseekReasoner =
-      findModel(["deepseek/deepseek-v4-pro", "deepseek/deepseek-r1"]) ??
-      BASELINE_OPENROUTER_PRICING.deepseekReasoner;
+      findModel([
+        "deepseek/deepseek-v4-pro",
+        "deepseek/deepseek-v4-pro-0813",
+        "deepseek/deepseek-reasoner",
+        "deepseek/deepseek-r1",
+      ]) ?? BASELINE_OPENROUTER_PRICING.deepseekReasoner;
 
     const glmFlash =
       findModel([
+        "z-ai/glm-5.3-flash",
         "z-ai/glm-4.7-flash",
         "z-ai/glm-5",
         "z-ai/glm-4.5-air",
@@ -132,6 +146,7 @@ export async function getLiveOpenRouterPricing(forceRefresh = false): Promise<Li
 
     const qwenFlash =
       findModel([
+        "qwen/qwen3.8-flash",
         "qwen/qwen3-30b-a3b-instruct-2507",
         "qwen/qwen3.6-flash",
         "qwen/qwen3.5-flash-02-23",
@@ -140,8 +155,11 @@ export async function getLiveOpenRouterPricing(forceRefresh = false): Promise<Li
       ]) ?? BASELINE_OPENROUTER_PRICING.qwenFlash;
 
     const visionSonnet =
-      findModel(["anthropic/claude-sonnet-5", "anthropic/claude-sonnet-4.6", "anthropic/claude-3.5-sonnet"]) ??
-      BASELINE_OPENROUTER_PRICING.visionSonnet;
+      findModel([
+        "anthropic/claude-sonnet-5",
+        "anthropic/claude-sonnet-4.6",
+        "anthropic/claude-3.5-sonnet",
+      ]) ?? BASELINE_OPENROUTER_PRICING.visionSonnet;
 
     const liveResult: LiveOpenRouterPricing = {
       deepseekChat,
@@ -160,11 +178,16 @@ export async function getLiveOpenRouterPricing(forceRefresh = false): Promise<Li
     return liveResult;
   } catch (err: any) {
     console.error("[openrouter-pricing] Erreur lors de la récupération OpenRouter:", err?.message || err);
-    return (
-      cachedPricing ?? {
-        ...BASELINE_OPENROUTER_PRICING,
-        fetchedAt: new Date().toISOString(),
-      }
-    );
+    const fallback = cachedPricing
+      ? { ...cachedPricing, isLive: false, source: "cached" as const }
+      : {
+          ...BASELINE_OPENROUTER_PRICING,
+          isLive: false,
+          source: "baseline_fallback" as const,
+          fetchedAt: new Date().toISOString(),
+        };
+    cachedPricing = fallback;
+    cacheTimestamp = now;
+    return fallback;
   }
 }

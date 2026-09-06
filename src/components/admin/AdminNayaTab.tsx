@@ -41,10 +41,12 @@ import type {
   ProgressionHealthResponse,
   NayaModelRoutingSettings,
   ChallengeModelId,
+} from "@/lib/admin-os.functions";
+import {
+  CHALLENGE_MODEL_OPTIONS,
   getChallengeModelOptions,
   refreshAiModelPricingAdmin,
 } from "@/lib/admin-os.functions";
-import { CHALLENGE_MODEL_OPTIONS } from "@/lib/admin-os.functions";
 import {
   decideLoupSuggestionsAdmin,
   LOUP_DECISION_LABELS,
@@ -246,19 +248,40 @@ export function AdminNayaTab({
     }
   };
 
+  if (!telemetry) {
+    return (
+      <div className="rounded-3xl border border-ink/10 bg-white p-12 text-center shadow-sm">
+        <Loader2 className="size-8 animate-spin text-brand mx-auto mb-3" />
+        <p className="font-display text-base font-bold text-ink">Chargement de la télémétrie IA Naya...</p>
+        <p className="text-xs text-ink/50 mt-1">Récupération des métriques d'inférence et des tarifs OpenRouter.</p>
+      </div>
+    );
+  }
+
   const {
-    totalApiCalls,
-    totalTokens,
-    tokenUsage,
-    totalCostUsd,
-    totalCostXof,
-    peakCeilingCostUsd,
-    peakCeilingCostXof,
-    conversionRatePct,
-    featureBreakdown,
-    modelBreakdown,
-    funnel,
-    projection,
+    totalApiCalls = 0,
+    totalTokens = 0,
+    tokenUsage = {
+      deepseekChatInputTokens: 0,
+      deepseekChatOutputTokens: 0,
+      deepseekReasonerInputTokens: 0,
+      deepseekReasonerOutputTokens: 0,
+      visionSonnetInputTokens: 0,
+      visionSonnetOutputTokens: 0,
+      glmFlashInputTokens: 0,
+      glmFlashOutputTokens: 0,
+      qwenFlashInputTokens: 0,
+      qwenFlashOutputTokens: 0,
+    },
+    totalCostUsd = 0,
+    totalCostXof = 0,
+    peakCeilingCostUsd = 0,
+    peakCeilingCostXof = 0,
+    conversionRatePct = 0,
+    featureBreakdown = [],
+    modelBreakdown = [],
+    funnel = { generated: 0, started: 0, completed: 0, conversionRatePct: 0 },
+    projection = { projectedCallsMonthly: 0, projectedCostUsdMonthly: 0, projectedCostXofMonthly: 0 },
   } = telemetry;
 
   const peakHourNow = isDeepSeekPeakHour(new Date());
@@ -582,7 +605,7 @@ export function AdminNayaTab({
               </div>
               <div className="pt-2.5 mt-2.5 border-t border-emerald-100 flex items-center justify-between text-[10px]">
                 <span className="font-extrabold text-emerald-700">
-                  ${telemetry?.livePricing?.glmFlash?.inputPerM ?? 0.06} / ${telemetry?.livePricing?.glmFlash?.outputPerM ?? 0.4}
+                  ${telemetry?.livePricing?.glmFlash?.inputPerM ?? 0.075} / ${telemetry?.livePricing?.glmFlash?.outputPerM ?? 0.25}
                 </span>
                 <span className="font-semibold text-emerald-800">OpenRouter (1M)</span>
               </div>
@@ -1288,7 +1311,7 @@ export function AdminNayaTab({
                     </span>
                     <span className="text-[10px] text-ink/50 font-semibold">
                       {model.model.includes("GLM")
-                        ? `($${telemetry?.livePricing?.glmFlash?.inputPerM ?? 0.06}/$${telemetry?.livePricing?.glmFlash?.outputPerM ?? 0.4} 1M)`
+                        ? `($${telemetry?.livePricing?.glmFlash?.inputPerM ?? 0.075}/$${telemetry?.livePricing?.glmFlash?.outputPerM ?? 0.25} 1M)`
                         : model.model.includes("Qwen")
                         ? `($${telemetry?.livePricing?.qwenFlash?.inputPerM ?? 0.0481}/$${telemetry?.livePricing?.qwenFlash?.outputPerM ?? 0.193} 1M)`
                         : model.model.includes("V4 Pro")
@@ -1489,7 +1512,7 @@ export function AdminNayaTab({
           </div>
 
           <div className="text-[11px] text-ink/50 italic text-center">
-            * Projection multi-modèles calculée en temps réel d'après la grille tarifaire OpenRouter : DeepSeek V4 Flash (${telemetry?.livePricing?.deepseekChat?.inputPerM ?? 0.0808}/$${telemetry?.livePricing?.deepseekChat?.outputPerM ?? 0.1616}), GLM 5.3 Flash (${telemetry?.livePricing?.glmFlash?.inputPerM ?? 0.06}/$${telemetry?.livePricing?.glmFlash?.outputPerM ?? 0.4}), Qwen 3.8 Flash (${telemetry?.livePricing?.qwenFlash?.inputPerM ?? 0.0481}/$${telemetry?.livePricing?.qwenFlash?.outputPerM ?? 0.193}) et Claude Sonnet 5 (vision photos). Taux 1 USD = 600 XOF. Le mode réflexion (activé sur v4-pro) génère des tokens de raisonnement non modélisés ici.
+            * Projection multi-modèles calculée en temps réel d'après la grille tarifaire OpenRouter : DeepSeek V4 Flash (${telemetry?.livePricing?.deepseekChat?.inputPerM ?? 0.0808}/$${telemetry?.livePricing?.deepseekChat?.outputPerM ?? 0.1616}), GLM 5.3 Flash (${telemetry?.livePricing?.glmFlash?.inputPerM ?? 0.075}/$${telemetry?.livePricing?.glmFlash?.outputPerM ?? 0.25}), Qwen 3.8 Flash (${telemetry?.livePricing?.qwenFlash?.inputPerM ?? 0.0481}/$${telemetry?.livePricing?.qwenFlash?.outputPerM ?? 0.193}) et Claude Sonnet 5 (vision photos). Taux 1 USD = 600 XOF. Le mode réflexion (activé sur v4-pro) génère des tokens de raisonnement non modélisés ici.
           </div>
         </div>
       </div>

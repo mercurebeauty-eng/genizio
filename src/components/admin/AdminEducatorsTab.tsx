@@ -12,11 +12,14 @@ import {
   listSchoolsAdmin,
   createSchoolAdmin,
   updateSchoolAdmin,
+  evaluateCampusLicense,
   type SchoolItem,
   type SchoolStatus,
   type SchoolType,
   type SchoolPricingTier,
 } from "@/lib/schools.functions";
+import { CAMPUS_TIERS } from "@/lib/pricing";
+import { AdminProfessionalActivationTab } from "@/components/admin/AdminProfessionalActivationTab";
 import { revokeChildDelegation } from "@/lib/delegations.functions";
 import {
   GraduationCap,
@@ -46,7 +49,7 @@ import { confirmDialog } from "@/components/ui/confirm-dialog";
 
 export function AdminEducatorsTab() {
   const { session } = useSession();
-  const [subTab, setSubTab] = useState<"educators" | "schools">("educators");
+  const [subTab, setSubTab] = useState<"educators" | "activation" | "schools">("educators");
 
   // --- 1. Enseignants & Conseillers ---
   const [educators, setEducators] = useState<EducatorAdminRow[]>([]);
@@ -89,6 +92,8 @@ export function AdminEducatorsTab() {
   const [schoolWebsite, setSchoolWebsite] = useState("");
   const [schoolCode, setSchoolCode] = useState("");
   const [schoolLeaderEmail, setSchoolLeaderEmail] = useState("");
+  const [schoolLicensePaid, setSchoolLicensePaid] = useState(false);
+  const [schoolLicenseValidUntil, setSchoolLicenseValidUntil] = useState("");
 
   const listSchoolsFn = useServerFn(listSchoolsAdmin);
   const createSchoolFn = useServerFn(createSchoolAdmin);
@@ -214,6 +219,8 @@ export function AdminEducatorsTab() {
     setSchoolWebsite("");
     setSchoolCode("");
     setSchoolLeaderEmail("");
+    setSchoolLicensePaid(false);
+    setSchoolLicenseValidUntil("");
     setIsSchoolModalOpen(true);
   };
 
@@ -232,6 +239,8 @@ export function AdminEducatorsTab() {
     setSchoolWebsite(school.websiteUrl || "");
     setSchoolCode(school.code);
     setSchoolLeaderEmail(""); // By default, we don't display their email as it's not returned by the school payload directly (only leaderUserId is). But they can set a new one.
+    setSchoolLicensePaid(school.licensePaid);
+    setSchoolLicenseValidUntil(school.licenseValidUntil ? school.licenseValidUntil.slice(0, 10) : "");
     setIsSchoolModalOpen(true);
   };
 
@@ -258,6 +267,8 @@ export function AdminEducatorsTab() {
             status: schoolStatus,
             pricingTier: schoolPricingTier,
             licensedStudentsQuota: Number(schoolQuota) || 0,
+            licensePaid: schoolLicensePaid,
+            licenseValidUntil: schoolLicenseValidUntil || null,
             address: schoolAddress.trim() || null,
             contactEmail: schoolEmail.trim() || null,
             contactPhone: schoolPhone.trim() || null,
@@ -278,6 +289,7 @@ export function AdminEducatorsTab() {
             status: schoolStatus,
             pricingTier: schoolPricingTier,
             licensedStudentsQuota: Number(schoolQuota) || 0,
+            licensePaid: schoolLicensePaid,
             address: schoolAddress.trim() || undefined,
             contactEmail: schoolEmail.trim() || undefined,
             contactPhone: schoolPhone.trim() || undefined,
@@ -371,6 +383,18 @@ export function AdminEducatorsTab() {
         </button>
         <button
           type="button"
+          onClick={() => setSubTab("activation")}
+          className={`pb-3 text-sm font-extrabold flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
+            subTab === "activation"
+              ? "border-indigo-600 text-indigo-700"
+              : "border-transparent text-ink/50 hover:text-ink"
+          }`}
+        >
+          <Award className="size-4" />
+          <span>Activation & Habilitations</span>
+        </button>
+        <button
+          type="button"
           onClick={() => setSubTab("schools")}
           className={`pb-3 text-sm font-extrabold flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
             subTab === "schools"
@@ -383,7 +407,9 @@ export function AdminEducatorsTab() {
         </button>
       </div>
 
-      {subTab === "educators" ? (
+      {subTab === "activation" ? (
+        <AdminProfessionalActivationTab />
+      ) : subTab === "educators" ? (
         <>
           {/* KPI Cards Enseignants */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -670,9 +696,9 @@ export function AdminEducatorsTab() {
                         <td className="py-3 px-4">
                           <p className="font-bold text-ink">
                             {s.pricingTier === "standard_campus"
-                              ? "Standard Campus"
+                              ? CAMPUS_TIERS.standard_campus.name.replace("Campus Pro", "Standard Campus")
                               : s.pricingTier === "pilot"
-                                ? "Pack Pilote"
+                                ? CAMPUS_TIERS.pilot.name
                                 : s.pricingTier === "sponsored"
                                   ? "Mécénat B2B"
                                   : "Freemium"}
@@ -682,6 +708,49 @@ export function AdminEducatorsTab() {
                               ? `${s.licensedStudentsQuota} élèves licenciés`
                               : "Pas de quota"}
                           </p>
+                          {(() => {
+                            const license = evaluateCampusLicense({
+                              status: s.status,
+                              pricingTier: s.pricingTier,
+                              licensedStudentsQuota: s.licensedStudentsQuota,
+                              licenseValidUntil: s.licenseValidUntil,
+                              activeStudentsCount: s.activeStudentsCount ?? 0,
+                            });
+                            const expired =
+                              !!s.licenseValidUntil &&
+                              new Date(s.licenseValidUntil).getTime() < Date.now();
+                            return (
+                              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                {s.licensePaid ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider">
+                                    Payée
+                                  </span>
+                                ) : s.pricingTier === "free" || s.pricingTier === "sponsored" ? null : (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-red-50 text-red-700 border border-red-200 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider">
+                                    Impayée
+                                  </span>
+                                )}
+                                {expired && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider">
+                                    Échéance dépassée
+                                  </span>
+                                )}
+                                {!license.hasActiveCampusPass &&
+                                  s.pricingTier !== "free" &&
+                                  s.pricingTier !== "sponsored" && (
+                                    <span className="text-[9px] font-bold text-ink/40">
+                                      Pass inactif
+                                    </span>
+                                  )}
+                                {s.licenseValidUntil && (
+                                  <span className="text-[9px] font-medium text-ink/40">
+                                    Jusqu'au{" "}
+                                    {new Date(s.licenseValidUntil).toLocaleDateString("fr-FR")}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </td>
                         <td className="py-3 px-4 text-center">
                           <p className="font-black text-indigo-700 text-sm">
@@ -884,10 +953,10 @@ export function AdminEducatorsTab() {
                     onChange={(e) => setSchoolPricingTier(e.target.value as SchoolPricingTier)}
                     className="w-full rounded-xl border border-ink/10 bg-white px-3 py-2.5 text-xs font-bold text-ink outline-none cursor-pointer"
                   >
-                    <option value="free">0 FCFA - Professeur Libre (Freemium)</option>
-                    <option value="pilot">100 000 FCFA/an - Pack Pilote</option>
-                    <option value="standard_campus">3 500 FCFA/élève/an - Standard Campus</option>
-                    <option value="sponsored">0 FCFA - Campus Subventionné (Mécénat B2B)</option>
+                    <option value="free">0 FCFA — Professeur Libre (Freemium)</option>
+                    <option value="pilot">{CAMPUS_TIERS.pilot.name} — {CAMPUS_TIERS.pilot.priceXof.toLocaleString("fr-FR")} FCFA/an</option>
+                    <option value="standard_campus">Campus Pro (Standard) — {CAMPUS_TIERS.standard_campus.priceXof.toLocaleString("fr-FR")} FCFA/an</option>
+                    <option value="sponsored">0 FCFA — Campus Subventionné (Mécénat B2B)</option>
                   </select>
                 </div>
 
@@ -899,6 +968,28 @@ export function AdminEducatorsTab() {
                     value={schoolQuota}
                     onChange={(e) => setSchoolQuota(Number(e.target.value))}
                     placeholder="Ex: 100, 500..."
+                    className="w-full rounded-xl border border-ink/10 px-3.5 py-2.5 text-xs font-bold text-ink outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-ink/70">Statut de la licence</label>
+                  <select
+                    value={schoolLicensePaid ? "paid" : "unpaid"}
+                    onChange={(e) => setSchoolLicensePaid(e.target.value === "paid")}
+                    className="w-full rounded-xl border border-ink/10 bg-white px-3 py-2.5 text-xs font-bold text-ink outline-none cursor-pointer"
+                  >
+                    <option value="unpaid">Impayée (déclaratif, sans encaissement)</option>
+                    <option value="paid">Payée (encaissement tracé)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-ink/70">Échéance de licence</label>
+                  <input
+                    type="date"
+                    value={schoolLicenseValidUntil}
+                    onChange={(e) => setSchoolLicenseValidUntil(e.target.value)}
                     className="w-full rounded-xl border border-ink/10 px-3.5 py-2.5 text-xs font-bold text-ink outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>

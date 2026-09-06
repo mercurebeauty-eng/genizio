@@ -6,6 +6,9 @@ import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import { normalizeChildInterests } from "@/lib/interest-migration";
 import { getChildAccessStatus } from "@/lib/child-access";
 import { assertChildActor } from "@/lib/child-actor";
+import { logMentorAction } from "@/lib/mentor-actions";
+import { notifyUser } from "@/lib/app-notifications";
+import { creditMentorPoints } from "@/lib/mentor-trust";
 import {
   formatTimePressureNote,
   resolveTimeLimitMinutes,
@@ -2887,6 +2890,18 @@ export const updateChallenge = createServerFn({ method: "POST" })
     const { data: row, error } = await updateQuery.select("*").single();
     if (error) throw new Error(error.message);
 
+    // Journal acteur mentor (le journal suit l'acteur, pas l'écran) — la vue parent
+    // en mode Mentor passe par cette fn pour Commencer / progression.
+    if (actor === "mentor") {
+      void logMentorAction({
+        mentorUserId: context.userId,
+        childId: row.child_id,
+        challengeId: row.id,
+        action: "update",
+        payload: { status: patch.status ?? null, progress: patch.progress ?? null },
+      });
+    }
+
     return row;
   });
 
@@ -3439,22 +3454,30 @@ export const validateChallengeProof = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => ValidateInput.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const { userId } = context;
 
-    const { data: challenge, error: challengeErr } = await supabase
+    // Décision #81 : le mentor assigné actif est l'adulte présent en séance — il soumet
+    // la preuve via le Mode Enfant de la vue parent (assertChildActor ci-dessous).
+    // Lecture service role : la RLS « Parents manage their own challenges » ne rend pas
+    // le défi aux mentors, et les défis non-complétés ne sont de toute façon pas
+    // visibles par la RLS mentor lecture seule.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sup = supabaseAdmin as any;
+
+    const { data: challenge, error: challengeErr } = await sup
       .from("challenges")
       .select("*, child_profiles(*)")
       .eq("id", data.id)
       .single();
 
     if (challengeErr || !challenge) throw new Error("Défi introuvable");
-    if (challenge.user_id !== userId) throw new Error("Accès refusé.");
+    const actor = await assertChildActor(sup, userId, challenge.child_id);
     if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
     if (challenge.child_profiles?.is_active === false)
       throw new Error("Ce profil est désactivé par l'administrateur.");
 
-    return validateChallengeProofCore({
-      db: supabase,
+    const result = await validateChallengeProofCore({
+      db: sup,
       challenge,
       actingUserId: userId,
       id: data.id,
@@ -3462,6 +3485,36 @@ export const validateChallengeProof = createServerFn({ method: "POST" })
       proofImageBase64: data.proofImageBase64,
       proofImageMediaType: data.proofImageMediaType,
     });
+
+    // Journal acteur mentor (le journal suit l'acteur, pas l'écran) + points de
+    // Confiance Mentor — mêmes effets que l'ancien chemin assertMentorOperator.
+    if (actor === "mentor") {
+      void logMentorAction({
+        mentorUserId: userId,
+        childId: challenge.child_id,
+        challengeId: challenge.id,
+        action: result.relevant ? "proof_submitted" : "proof_rejected",
+        payload: { relevant: result.relevant, imageAnalyzed: result.imageAnalyzed },
+      });
+      if (result.relevant) {
+        void notifyUser({
+          userId: challenge.user_id,
+          type: "mentor_challenge_completed",
+          childId: challenge.child_id,
+          payload: { challenge_id: challenge.id, title: challenge.title },
+        });
+        void creditMentorPoints(sup, {
+          mentorUserId: userId,
+          childId: challenge.child_id,
+          challengeId: challenge.id,
+          kind: "challenge_completed",
+          points: 2,
+          reason: "Défi complété par le mentor",
+        });
+      }
+    }
+
+    return result;
   });
 
 // Étape 3 — "classer automatiquement le commentaire du parent" (brainstorm produit,
@@ -3561,7 +3614,7 @@ export const submitChallengeNotCompleted = createServerFn({ method: "POST" })
       .single();
 
     if (challengeErr || !challenge) throw new Error("Défi introuvable");
-    await assertChildActor(sup, userId, challenge.child_id);
+    const actor = await assertChildActor(sup, userId, challenge.child_id);
     if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
     if (challenge.child_profiles?.is_active === false)
       throw new Error("Ce profil est désactivé par l'administrateur.");
@@ -3690,6 +3743,24 @@ export const submitChallengeNotCompleted = createServerFn({ method: "POST" })
         console.error("Non-fatal: pré-génération de la prochaine mission a échoué", err);
       }
     })().catch((err) => console.error("Non-fatal: traitement post-échec failed", err));
+
+    // Journal acteur mentor : le parent est notifié du non-aboutissement quand le
+    // mentor opère (même effet que l'ancien chemin assertMentorOperator).
+    if (actor === "mentor") {
+      void logMentorAction({
+        mentorUserId: userId,
+        childId: challenge.child_id,
+        challengeId: challenge.id,
+        action: "abandon",
+        payload: { reason: data.reason, reasonChip: data.reasonChip ?? null },
+      });
+      void notifyUser({
+        userId: challenge.user_id,
+        type: "mentor_abandon",
+        childId: challenge.child_id,
+        payload: { challenge_id: challenge.id, title: challenge.title },
+      });
+    }
 
     return { challenge: updated };
   });
@@ -3860,27 +3931,62 @@ export const submitDeclarativeProof = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => SubmitDeclarativeInput.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const { userId } = context;
 
-    const { data: challenge, error: challengeErr } = await supabase
+    // Décision #81 : le mentor assigné actif est l'adulte présent en séance — lecture
+    // service role + assertChildActor (la RLS ne rend pas le défi aux mentors).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sup = supabaseAdmin as any;
+
+    const { data: challenge, error: challengeErr } = await sup
       .from("challenges")
       .select("*, child_profiles(*)")
       .eq("id", data.id)
       .single();
 
     if (challengeErr || !challenge) throw new Error("Défi introuvable");
-    if (challenge.user_id !== userId) throw new Error("Accès refusé.");
+    const actor = await assertChildActor(sup, userId, challenge.child_id);
     if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
     if (challenge.child_profiles?.is_active === false)
       throw new Error("Ce profil est désactivé par l'administrateur.");
 
-    return submitDeclarativeProofCore({
-      db: supabase,
+    const result = await submitDeclarativeProofCore({
+      db: sup,
       challenge,
       actingUserId: userId,
       id: data.id,
       reportedValue: data.reportedValue,
     });
+
+    // Journal acteur mentor + points de Confiance Mentor — mêmes effets que
+    // l'ancien chemin assertMentorOperator.
+    if (actor === "mentor") {
+      void logMentorAction({
+        mentorUserId: userId,
+        childId: challenge.child_id,
+        challengeId: challenge.id,
+        action: result.relevant ? "proof_submitted" : "proof_rejected",
+        payload: { relevant: result.relevant, declarative: true },
+      });
+      if (result.relevant) {
+        void notifyUser({
+          userId: challenge.user_id,
+          type: "mentor_challenge_completed",
+          childId: challenge.child_id,
+          payload: { challenge_id: challenge.id, title: challenge.title },
+        });
+        void creditMentorPoints(sup, {
+          mentorUserId: userId,
+          childId: challenge.child_id,
+          challengeId: challenge.id,
+          kind: "challenge_completed",
+          points: 2,
+          reason: "Défi complété par le mentor (déclaratif)",
+        });
+      }
+    }
+
+    return result;
   });
 
 export const AssignTemplateInput = z.object({
