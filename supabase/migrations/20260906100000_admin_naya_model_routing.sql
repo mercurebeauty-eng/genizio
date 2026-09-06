@@ -34,3 +34,17 @@ CREATE POLICY "admin_naya_settings_update_service"
 INSERT INTO public.admin_naya_settings (id, challenge_model, fallback_enabled)
 VALUES ('default', 'deepseek-v4-flash', true)
 ON CONFLICT (id) DO NOTHING;
+
+-- Enregistrement également dans la table générique app_settings (sans nécessité de nouvelle migration)
+CREATE TABLE IF NOT EXISTS public.app_settings (
+  key text PRIMARY KEY,
+  value jsonb NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
+
+INSERT INTO public.app_settings (key, value)
+VALUES ('naya_model_routing', '{"challenge_model": "deepseek-v4-flash", "fallback_enabled": true}'::jsonb)
+ON CONFLICT (key) DO NOTHING;
+

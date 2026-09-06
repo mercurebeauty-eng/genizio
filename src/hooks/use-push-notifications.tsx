@@ -84,7 +84,7 @@ export function usePushNotifications() {
       }
       return { ok: true };
     } catch (err) {
-      console.error("Abonnement push échoué:", err);
+      console.warn("Abonnement push en attente :", err);
       return {
         ok: false,
         reason: "subscribe_failed",

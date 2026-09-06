@@ -659,7 +659,7 @@ export async function insertMentorAssignments(
   // d'assignation — le ban est structurel, pas une décision après coup.
   const { data: profile } = await (supabaseAdmin as any)
     .from("mentor_profiles")
-    .select("status")
+    .select("status, category")
     .eq("mentor_user_id", params.mentorUserId)
     .maybeSingle();
   const status = (profile?.status as string | undefined) ?? "active";
@@ -668,6 +668,13 @@ export async function insertMentorAssignments(
       status === "banned"
         ? "Ce mentor est banni — restaurez-le avant de l'assigner."
         : "Ce mentor est suspendu — restaurez-le avant de l'assigner.",
+    );
+  }
+  // Garde-fou deux modèles : un mentor de Soutien n'accompagne que par escouade
+  // (mentor_squads, 6 à 8 enfants) — jamais en 1-on-1 via la table `mentors`.
+  if (resolveMentorCategory(profile?.category) === "support") {
+    throw new Error(
+      "Ce mentor est un mentor de Soutien (Club du Samedi) : il est assigné par escouade de 6 à 8 enfants, pas enfant par enfant.",
     );
   }
 
@@ -813,6 +820,10 @@ export interface MentorSearchResult {
   status: string;
   /** Nombre d'assignations actives (removed_at IS NULL). */
   active_assignments: number;
+  /** Modèle du mentor — pilote les flux d'assignation autorisés (1-on-1 vs escouade). */
+  category: MentorCategory;
+  /** Quota effectif (computeMentorQuota) — aperçu avant assignation. */
+  quota: number;
 }
 
 // Recherche d'un mentor (n'importe quel compte Génizio) par email/téléphone/nom —
@@ -831,17 +842,23 @@ export const searchMentorsAdmin = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     const users = rows ?? [];
 
-    // Statut de confiance + assignations actives — une requête groupée chacun
-    // (borné par les 20 résultats et le quota 5 par mentor).
+    // Statut de confiance + catégorie + assignations actives — requêtes groupées
+    // (borné par les 20 résultats et le quota par mentor).
     const statusByUser = new Map<string, string>();
+    const categoryByUser = new Map<string, MentorCategory>();
+    const profileCreatedByUser = new Map<string, string>();
     const activeCountByUser = new Map<string, number>();
     if (users.length > 0) {
       const userIds = users.map((u) => u.user_id);
-      const { data: profiles } = await supabaseAdmin
+      const { data: profiles } = await (supabaseAdmin as any)
         .from("mentor_profiles")
-        .select("mentor_user_id, status")
+        .select("mentor_user_id, status, category, created_at")
         .in("mentor_user_id", userIds);
-      for (const p of profiles ?? []) statusByUser.set(p.mentor_user_id, p.status);
+      for (const p of profiles ?? []) {
+        statusByUser.set(p.mentor_user_id, p.status);
+        categoryByUser.set(p.mentor_user_id, resolveMentorCategory(p.category));
+        profileCreatedByUser.set(p.mentor_user_id, p.created_at);
+      }
 
       const { data: assignments } = await supabaseAdmin
         .from("mentors")
@@ -853,14 +870,23 @@ export const searchMentorsAdmin = createServerFn({ method: "GET" })
       }
     }
 
-    return users.map((u) => ({
-      user_id: u.user_id,
-      email: u.email,
-      phone: u.phone,
-      display_name: u.display_name,
-      status: statusByUser.get(u.user_id) ?? "active",
-      active_assignments: activeCountByUser.get(u.user_id) ?? 0,
-    }));
+    return users.map((u) => {
+      const category = categoryByUser.get(u.user_id) ?? DEFAULT_MENTOR_CATEGORY;
+      return {
+        user_id: u.user_id,
+        email: u.email,
+        phone: u.phone,
+        display_name: u.display_name,
+        status: statusByUser.get(u.user_id) ?? "active",
+        active_assignments: activeCountByUser.get(u.user_id) ?? 0,
+        category,
+        quota: computeMentorQuota({
+          referenceCreatedAt: profileCreatedByUser.get(u.user_id) ?? null,
+          category,
+          extraQuota: 0,
+        }),
+      };
+    });
   });
 
 const AssignMentorToChildInput = z.object({
@@ -919,8 +945,74 @@ export const assignMentorToChildAdmin = createServerFn({ method: "POST" })
 const AssignMentorToCampaignInput = z.object({
   campaignId: z.string().uuid(),
   mentorEmail: z.string().email(),
-  count: z.number().int().min(1).max(5).default(5),
+  /** Sélection EXPLICITE des enfants à confier — plus de « count » tronqué en silence. */
+  childIds: z.array(z.string().uuid()).min(1).max(20),
 });
+
+// Cohorte d'une campagne pour le multi-sélecteur : enfants inscrits + drapeau
+// « déjà accompagné » (non sélectionnable) + email du mentor actif le cas échéant.
+export interface CampaignCohortChild {
+  id: string;
+  name: string;
+  age: number | null;
+  already_mentored: boolean;
+  current_mentor_email: string | null;
+}
+
+export const listCampaignCohortAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => z.object({ campaignId: z.string().uuid() }).parse(input))
+  .handler(async ({ data }): Promise<CampaignCohortChild[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: enrollments } = await (supabaseAdmin as any)
+      .from("season_enrollments")
+      .select("child_id")
+      .eq("campaign_id", data.campaignId);
+    const cohortChildIds = [
+      ...new Set<string>((enrollments ?? []).map((e: any) => e.child_id as string)),
+    ];
+    if (cohortChildIds.length === 0) return [];
+
+    const [childrenRes, assignmentsRes] = await Promise.all([
+      supabaseAdmin
+        .from("child_profiles")
+        .select("id, name, age, is_active")
+        .in("id", cohortChildIds)
+        .order("name"),
+      supabaseAdmin
+        .from("mentors")
+        .select("child_profile_id, mentor_user_id")
+        .in("child_profile_id", cohortChildIds),
+    ]);
+    if (childrenRes.error) throw new Error(childrenRes.error.message);
+
+    const emailByMentor = new Map<string, string>();
+    const mentorIds = [
+      ...new Set((assignmentsRes.data ?? []).map((a: any) => a.mentor_user_id as string)),
+    ];
+    if (mentorIds.length > 0) {
+      const { data: mentors } = await supabaseAdmin
+        .from("parent_profiles")
+        .select("user_id, email")
+        .in("user_id", mentorIds);
+      for (const m of mentors ?? []) emailByMentor.set(m.user_id, m.email);
+    }
+    const mentoredByChild = new Map<string, string | null>();
+    for (const a of assignmentsRes.data ?? []) {
+      mentoredByChild.set(
+        a.child_profile_id,
+        emailByMentor.get(a.mentor_user_id) ?? null,
+      );
+    }
+
+    return (childrenRes.data ?? []).map((c: any) => ({
+      id: c.id as string,
+      name: c.name as string,
+      age: (c.age as number | null) ?? null,
+      already_mentored: mentoredByChild.has(c.id),
+      current_mentor_email: mentoredByChild.get(c.id) ?? null,
+    }));
+  });
 
 export const assignMentorToCampaignAdmin = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
@@ -950,6 +1042,19 @@ export const assignMentorToCampaignAdmin = createServerFn({ method: "POST" })
       throw new Error(`Aucun compte trouvé pour l'email: ${data.mentorEmail}`);
     }
 
+    // Modèle : le flux cohorte de campagne est un flux 1-on-1 → mentors Pro
+    // uniquement (les mentors de Soutien passent par les escouades).
+    const { data: mentorProfile } = await (supabaseAdmin as any)
+      .from("mentor_profiles")
+      .select("category")
+      .eq("mentor_user_id", mentor.user_id)
+      .maybeSingle();
+    if (resolveMentorCategory(mentorProfile?.category) === "support") {
+      throw new Error(
+        "Ce compte est un mentor de Soutien (Club du Samedi) : il ne reçoit pas d'enfants en 1-on-1 — constituez son escouade de 6 à 8 enfants.",
+      );
+    }
+
     const { data: enrollments } = await (supabaseAdmin as any)
       .from("season_enrollments")
       .select("child_id")
@@ -968,10 +1073,15 @@ export const assignMentorToCampaignAdmin = createServerFn({ method: "POST" })
     const alreadyMentored = new Set(
       (existingSup ?? []).map((s: any) => s.child_profile_id as string),
     );
-    const unmentoredChildIds = cohortChildIds.filter((id) => !alreadyMentored.has(id));
 
-    if (unmentoredChildIds.length === 0) {
-      throw new Error("Tous les enfants de cette campagne ont déjà un mentor.");
+    // Chaque enfant choisi doit appartenir à la cohorte ET être sans mentor.
+    const invalid = data.childIds.filter(
+      (id) => !cohortChildIds.includes(id) || alreadyMentored.has(id),
+    );
+    if (invalid.length > 0) {
+      throw new Error(
+        `${invalid.length} enfant(s) sélectionné(s) sont hors campagne ou déjà accompagnés — rechargez la liste.`,
+      );
     }
 
     // Pré-check informatif seulement — le trigger DB check_mentor_quota (migration
@@ -988,23 +1098,22 @@ export const assignMentorToCampaignAdmin = createServerFn({ method: "POST" })
       extraQuota: campaign.extra_mentors_quota,
     });
     const slotsLeft = Math.max(0, quota - currentCount);
-    const toAssign = Math.min(data.count, slotsLeft, unmentoredChildIds.length);
 
-    if (toAssign === 0) {
+    if (data.childIds.length > slotsLeft) {
       throw new Error(
-        `Le mentor ${data.mentorEmail} a atteint sa limite de ${quota} enfants. Contactez le support pour augmenter son quota.`,
+        `Quota dépassé : ${data.childIds.length} enfants sélectionnés pour ${slotsLeft} place(s) restante(s) sur ${quota} (mentor ${data.mentorEmail}).`,
       );
     }
 
     // Insertion centralisée — même point de passage que le chemin admin manuel.
     await insertMentorAssignments(supabaseAdmin, {
       mentorUserId: mentor.user_id,
-      childProfileIds: unmentoredChildIds.slice(0, toAssign),
+      childProfileIds: data.childIds,
       campaignId: data.campaignId,
       assignedBy: (context as any).claims?.sub ?? null,
     });
 
-    return { success: true, assignedCount: toAssign };
+    return { success: true, assignedCount: data.childIds.length };
   });
 
 // ── Système de confiance (V1, décision « score auto ») ─────────────────────────

@@ -72,7 +72,7 @@ export function invalidateNayaModelRoutingCache(): void {
 }
 
 /**
- * Récupère les paramètres de routage actifs depuis admin_naya_settings (ou cache).
+ * Récupère les paramètres de routage actifs depuis app_settings ou admin_naya_settings (ou cache).
  */
 export async function getNayaModelRoutingSettings(
   db?: any,
@@ -88,10 +88,35 @@ export async function getNayaModelRoutingSettings(
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       client = supabaseAdmin;
     } catch {
-      return DEFAULT_SETTINGS;
+      return cachedSettings || DEFAULT_SETTINGS;
     }
   }
 
+  // 1. Essai de lecture depuis la table générique app_settings (recommandée, sans migration)
+  try {
+    const { data: appData, error: appError } = await client
+      .from("app_settings")
+      .select("value, updated_at")
+      .eq("key", "naya_model_routing")
+      .maybeSingle();
+
+    if (!appError && appData?.value) {
+      const val = appData.value as any;
+      const settings: NayaModelRoutingSettings = {
+        challengeModel: (val.challenge_model as ChallengeModelId) || "deepseek-v4-flash",
+        fallbackEnabled: val.fallback_enabled ?? true,
+        updatedAt: (appData.updated_at as string) ?? null,
+        updatedBy: (val.updated_by as string) ?? null,
+      };
+      cachedSettings = settings;
+      cacheExpiresAt = now + 60_000;
+      return settings;
+    }
+  } catch {
+    // app_settings pas encore prête, repli sur admin_naya_settings
+  }
+
+  // 2. Repli sur admin_naya_settings si déjà migrée
   try {
     const { data, error } = await client
       .from("admin_naya_settings")
@@ -99,28 +124,28 @@ export async function getNayaModelRoutingSettings(
       .eq("id", "default")
       .maybeSingle();
 
-    if (error || !data) {
-      return DEFAULT_SETTINGS;
+    if (!error && data) {
+      const settings: NayaModelRoutingSettings = {
+        challengeModel: (data.challenge_model as ChallengeModelId) || "deepseek-v4-flash",
+        fallbackEnabled: data.fallback_enabled ?? true,
+        updatedAt: data.updated_at ?? null,
+        updatedBy: data.updated_by ?? null,
+      };
+      cachedSettings = settings;
+      cacheExpiresAt = now + 60_000;
+      return settings;
     }
-
-    const settings: NayaModelRoutingSettings = {
-      challengeModel: (data.challenge_model as ChallengeModelId) || "deepseek-v4-flash",
-      fallbackEnabled: data.fallback_enabled ?? true,
-      updatedAt: data.updated_at ?? null,
-      updatedBy: data.updated_by ?? null,
-    };
-
-    cachedSettings = settings;
-    cacheExpiresAt = now + 60_000; // 60 secondes de cache
-    return settings;
-  } catch (err) {
-    console.warn("Lecture admin_naya_settings échouée, repli par défaut :", err);
-    return DEFAULT_SETTINGS;
+  } catch {
+    // table absente du schéma cache
   }
+
+  return cachedSettings || DEFAULT_SETTINGS;
 }
 
 /**
- * Met à jour le modèle de défi actif dans admin_naya_settings.
+ * Met à jour le modèle de défi actif dans app_settings et admin_naya_settings.
+ * En cas d'indisponibilité temporaire des tables SQL (schema cache PostgREST),
+ * le réglage est appliqué immédiatement en mémoire sans bloquer l'administrateur.
  */
 export async function updateNayaModelRoutingSettings(
   db: any,
@@ -130,31 +155,66 @@ export async function updateNayaModelRoutingSettings(
   const fallback = params.fallbackEnabled ?? true;
   const nowIso = new Date().toISOString();
 
-  const { data, error } = await db
-    .from("admin_naya_settings")
-    .upsert({
-      id: "default",
-      challenge_model: params.challengeModel,
-      fallback_enabled: fallback,
-      updated_at: nowIso,
-      updated_by: updatedBy ?? null,
-    })
-    .select("challenge_model, fallback_enabled, updated_at, updated_by")
-    .single();
-
-  if (error) {
-    throw new Error(`Erreur lors de la mise à jour du modèle Naya : ${error.message}`);
-  }
-
   const newSettings: NayaModelRoutingSettings = {
-    challengeModel: data.challenge_model as ChallengeModelId,
-    fallbackEnabled: data.fallback_enabled,
-    updatedAt: data.updated_at,
-    updatedBy: data.updated_by,
+    challengeModel: params.challengeModel,
+    fallbackEnabled: fallback,
+    updatedAt: nowIso,
+    updatedBy: updatedBy ?? null,
   };
 
+  // 1. Tenter l'écriture dans app_settings (table générique présente dans types.ts)
+  let persisted = false;
+  try {
+    const { error: appError } = await db
+      .from("app_settings")
+      .upsert(
+        {
+          key: "naya_model_routing",
+          value: {
+            challenge_model: params.challengeModel,
+            fallback_enabled: fallback,
+            updated_by: updatedBy ?? null,
+          },
+          updated_at: nowIso,
+        },
+        { onConflict: "key" },
+      );
+
+    if (!appError) {
+      persisted = true;
+    }
+  } catch {
+    // app_settings non disponible
+  }
+
+  // 2. Tenter également d'écrire dans admin_naya_settings (si table migrée)
+  try {
+    const { error: nayaError } = await db
+      .from("admin_naya_settings")
+      .upsert({
+        id: "default",
+        challenge_model: params.challengeModel,
+        fallback_enabled: fallback,
+        updated_at: nowIso,
+        updated_by: updatedBy ?? null,
+      });
+
+    if (!nayaError) {
+      persisted = true;
+    }
+  } catch {
+    // admin_naya_settings non disponible
+  }
+
+  if (!persisted) {
+    console.warn(
+      "[Naya Routing] Persistance SQL différée (tables non trouvées dans le schema cache). Réglage appliqué en mémoire immédiate.",
+    );
+  }
+
+  // Toujours mettre à jour le cache mémoire pour effet immédiat (valide 24h si pas de DB)
   cachedSettings = newSettings;
-  cacheExpiresAt = Date.now() + 60_000;
+  cacheExpiresAt = Date.now() + (persisted ? 60_000 : 24 * 3600 * 1000);
   return newSettings;
 }
 

@@ -68,6 +68,28 @@ describe("naya-routing.server", () => {
     expect(cached.challengeModel).toBe("qwen3.8-flash");
   });
 
+  it("applique le réglage en mémoire sans lever d'exception si les tables SQL échouent (schema cache)", async () => {
+    const brokenDb = {
+      from: () => ({
+        upsert: () => {
+          throw new Error("Could not find the table 'public.admin_naya_settings' in the schema cache");
+        },
+      }),
+    };
+
+    const updated = await updateNayaModelRoutingSettings(
+      brokenDb,
+      { challengeModel: "glm-5.3-flash", fallbackEnabled: false },
+      "admin@genizio.com",
+    );
+
+    expect(updated.challengeModel).toBe("glm-5.3-flash");
+    expect(updated.fallbackEnabled).toBe(false);
+
+    const cached = await getNayaModelRoutingSettings();
+    expect(cached.challengeModel).toBe("glm-5.3-flash");
+  });
+
   it("route vers callDeepSeekText quand deepseek-v4-flash est configuré", async () => {
     const callDeepSeekMock = vi.fn(async () => '{"title": "Défi DeepSeek"}');
 

@@ -13,6 +13,7 @@ import {
   generateMentorActivationCodesAdmin,
   listMentorActivationCodesAdmin,
   listCampaignsLightAdmin,
+  listCampaignCohortAdmin,
   listMentorSessionsAdmin,
   approveMentorSessionAdmin,
   markMentorSessionsPaidAdmin,
@@ -21,6 +22,7 @@ import {
   type ChildOfParentResult,
   type MentorSearchResult,
   type MentorActivationCodeRow,
+  type CampaignCohortChild,
 } from "@/lib/mentors.functions";
 import type { MentorCategory } from "@/lib/mentor-safeguards";
 import { formatXof } from "@/lib/pricing";
@@ -1255,12 +1257,15 @@ export function AdminMentorsTab({
   );
 }
 
-// Modale d'assignation à deux modes (Vague 3 multicouche, 2026-08-15) :
-//   • « Campagne » (primaire) : campagne + email + nombre d'enfants → le système pioche
-//     automatiquement dans la cohorte parmi les enfants sans mentor ;
+// Modale d'assignation à deux modes (refonte deux-modèles) :
+//   • « Campagne » (primaire) : campagne + email du mentor + SÉLECTION EXPLICITE des enfants
+//     non accompagnés de la cohorte, avec aperçu du quota restant — plus de pioche
+//     automatique tronquée en silence ;
 //   • « Parent → Enfant → Mentor » (spec §2-3) : recherche du parent (email/téléphone/nom),
-//     choix de l'enfant parmi SES enfants, choix du mentor, confirmation — jamais une
-//     liste plate de milliers d'enfants à faire défiler.
+//     choix de l'enfant parmi SES enfants, choix du mentor avec catégorie+quota affichés,
+//     confirmation — jamais une liste plate de milliers d'enfants à faire défiler.
+// Les deux modes sont des flux 1-on-1 : réservés aux mentors Pro. Un mentor de Soutien
+// reçoit son escouade (6-8 enfants) via le cadre Club — le serveur rejette sinon.
 function AssignMentorModal({
   campaigns,
   onClose,
@@ -1274,10 +1279,15 @@ function AssignMentorModal({
   const [mode, setMode] = useState<"campaign" | "child">("campaign");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Mode campagne
+  // Mode campagne — sélection explicite de la cohorte
   const [campaignId, setCampaignId] = useState("");
   const [email, setEmail] = useState("");
-  const [count, setCount] = useState(5);
+  const [cohort, setCohort] = useState<CampaignCohortChild[]>([]);
+  const [loadingCohort, setLoadingCohort] = useState(false);
+  const [selectedChildIds, setSelectedChildIds] = useState<Set<string>>(new Set());
+  // Quota : résolu via searchMentorsAdmin dès l'email saisi (aperçu avant validation).
+  const [mentorPreview, setMentorPreview] = useState<MentorSearchResult | null>(null);
+  const [previewingMentor, setPreviewingMentor] = useState(false);
 
   // Mode relationnel — étapes : 0 parent, 1 enfant, 2 mentor, 3 confirmation
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
@@ -1300,6 +1310,7 @@ function AssignMentorModal({
   const childrenOfParentFn = useServerFn(getChildrenOfParentAdmin);
   const searchMentorsFn = useServerFn(searchMentorsAdmin);
   const assignChildFn = useServerFn(assignMentorToChildAdmin);
+  const cohortFn = useServerFn(listCampaignCohortAdmin);
 
   const opts = () =>
     session?.access_token ? { headers: { Authorization: `Bearer ${session.access_token}` } } : {};
@@ -1384,10 +1395,18 @@ function AssignMentorModal({
       toast.error("Campagne et email du mentor requis.");
       return;
     }
+    if (selectedChildIds.size === 0) {
+      toast.error("Sélectionnez au moins un enfant de la cohorte.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const res = await assignCampaignFn({
-        data: { campaignId, mentorEmail: email.trim(), count },
+        data: {
+          campaignId,
+          mentorEmail: email.trim(),
+          childIds: [...selectedChildIds],
+        },
         ...opts(),
       });
       toast.success(
@@ -1400,6 +1419,60 @@ function AssignMentorModal({
       setIsSubmitting(false);
     }
   };
+
+  // Changement de campagne → chargement de la cohorte (enfants inscrits + drapeau mentor).
+  const handleCampaignChange = async (id: string) => {
+    setCampaignId(id);
+    setSelectedChildIds(new Set());
+    if (!id) {
+      setCohort([]);
+      return;
+    }
+    setLoadingCohort(true);
+    try {
+      const res = await cohortFn({ data: { campaignId: id }, ...opts() });
+      setCohort((res as any) ?? []);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Erreur lors du chargement de la cohorte.",
+      );
+    } finally {
+      setLoadingCohort(false);
+    }
+  };
+
+  const toggleCohortChild = (child: CampaignCohortChild) => {
+    if (child.already_mentored) return;
+    setSelectedChildIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(child.id)) next.delete(child.id);
+      else next.add(child.id);
+      return next;
+    });
+  };
+
+  // Aperçu du mentor (catégorie + quota restant) dès que l'email est complet.
+  useEffect(() => {
+    setMentorPreview(null);
+    const q = email.trim();
+    if (!q.includes("@") || q.length < 5) return;
+    const t = setTimeout(async () => {
+      setPreviewingMentor(true);
+      try {
+        const res = await searchMentorsFn({ data: { query: q }, ...opts() });
+        const found = ((res as any) ?? []) as MentorSearchResult[];
+        setMentorPreview(
+          found.find((m) => m.email.toLowerCase() === q.toLowerCase()) ?? found[0] ?? null,
+        );
+      } catch {
+        // Aperçu silencieux : le serveur revalidera à la soumission.
+      } finally {
+        setPreviewingMentor(false);
+      }
+    }, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email]);
 
   const resetChildFlow = () => {
     setStep(0);
@@ -1459,9 +1532,10 @@ function AssignMentorModal({
         {mode === "campaign" ? (
           <form onSubmit={handleCampaignSubmit} className="space-y-4">
             <p className="text-xs sm:text-sm font-medium text-ink/70 leading-relaxed">
-              L'application confie automatiquement des enfants de la cohorte qui n'ont encore aucun
-              mentor — jusqu'au nombre demandé, dans la limite du quota du mentor (5 enfants max, «
-              5 par 5 »).
+              Sélectionnez <strong>explicitement</strong> les enfants de la cohorte à confier au
+              mentor. Les séances seront financées par le compartiment séances de la campagne au
+              moment de leur déclaration. Réservé aux <strong>mentors Pro</strong> — pour un mentor
+              de Soutien, constituez son escouade (6-8 enfants).
             </p>
             <div>
               <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
@@ -1470,7 +1544,7 @@ function AssignMentorModal({
               <select
                 required
                 value={campaignId}
-                onChange={(e) => setCampaignId(e.target.value)}
+                onChange={(e) => void handleCampaignChange(e.target.value)}
                 className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer"
               >
                 <option value="">Sélectionner une campagne…</option>
@@ -1483,7 +1557,7 @@ function AssignMentorModal({
             </div>
             <div>
               <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
-                Email du mentor (compte Génizio)
+                Email du mentor Pro (compte Génizio)
               </label>
               <input
                 required
@@ -1493,20 +1567,100 @@ function AssignMentorModal({
                 placeholder="mentor@ong.org"
                 className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
               />
+              {previewingMentor && (
+                <p className="mt-1 text-[11px] font-semibold text-ink/40 flex items-center gap-1">
+                  <Loader2 className="size-3 animate-spin" /> Vérification du compte…
+                </p>
+              )}
+              {!previewingMentor && mentorPreview && (
+                <div
+                  className={`mt-1.5 rounded-xl border px-3 py-2 text-[11px] font-bold ${
+                    mentorPreview.category === "support"
+                      ? "border-amber-300 bg-amber-50 text-amber-800"
+                      : "border-purple-200 bg-purple-50 text-purple-800"
+                  }`}
+                >
+                  {mentorPreview.category === "support" ? (
+                    <>
+                      Mentor de Soutien (Club) détecté — <strong>pas d'assignation 1-on-1</strong>.
+                      Constituez son escouade de 6 à 8 enfants (cadre Club du Samedi).
+                    </>
+                  ) : (
+                    <>
+                      Mentor Pro (Clinique) · Quota <strong>{mentorPreview.quota}</strong> · Déjà{" "}
+                      <strong>{mentorPreview.active_assignments}</strong> enfant(s) ·{" "}
+                      <strong>
+                        {Math.max(0, mentorPreview.quota - mentorPreview.active_assignments)}
+                      </strong>{" "}
+                      place(s) restante(s)
+                    </>
+                  )}
+                </div>
+              )}
             </div>
+
+            {/* Cohorte : sélection explicite enfant par enfant */}
             <div>
-              <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
-                Nombre d'enfants à confier (max 5)
-              </label>
-              <input
-                required
-                type="number"
-                min={1}
-                max={5}
-                value={count}
-                onChange={(e) => setCount(Math.max(1, Math.min(5, parseInt(e.target.value) || 1)))}
-                className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
-              />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-extrabold uppercase tracking-widest text-ink/50">
+                  Enfants de la cohorte {cohort.length > 0 && `(${cohort.length})`}
+                </label>
+                {selectedChildIds.size > 0 && (
+                  <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-brand">
+                    {selectedChildIds.size} sélectionné{selectedChildIds.size > 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+              {!campaignId ? (
+                <p className="rounded-2xl border border-dashed border-ink/15 px-3 py-4 text-center text-xs font-semibold text-ink/40">
+                  Choisissez d'abord une campagne.
+                </p>
+              ) : loadingCohort ? (
+                <p className="flex items-center justify-center gap-2 rounded-2xl border border-ink/10 px-3 py-4 text-xs font-semibold text-ink/40">
+                  <Loader2 className="size-3.5 animate-spin" /> Chargement de la cohorte…
+                </p>
+              ) : cohort.length === 0 ? (
+                <p className="rounded-2xl border border-dashed border-ink/15 px-3 py-4 text-center text-xs font-semibold text-ink/40">
+                  Aucun enfant inscrit dans cette campagne.
+                </p>
+              ) : (
+                <div className="max-h-48 space-y-1.5 overflow-y-auto rounded-2xl border border-ink/10 bg-surface p-2">
+                  {cohort.map((child) => {
+                    const checked = selectedChildIds.has(child.id);
+                    return (
+                      <label
+                        key={child.id}
+                        className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors ${
+                          child.already_mentored
+                            ? "cursor-not-allowed opacity-50"
+                            : checked
+                              ? "cursor-pointer bg-brand/10 font-bold text-ink"
+                              : "cursor-pointer bg-white hover:bg-brand/5"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={child.already_mentored}
+                          onChange={() => toggleCohortChild(child)}
+                          className="size-4 accent-[var(--brand)]"
+                        />
+                        <span className="min-w-0 flex-1 truncate font-bold">
+                          {child.name}
+                          {child.age != null ? (
+                            <span className="text-ink/40 font-medium"> ({child.age} ans)</span>
+                          ) : null}
+                        </span>
+                        {child.already_mentored && (
+                          <span className="shrink-0 rounded-full bg-ink/5 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-ink/50">
+                            Déjà suivi par {child.current_mentor_email ?? "un mentor"}
+                          </span>
+                        )}
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3 pt-4 border-t border-ink/5">
@@ -1519,7 +1673,11 @@ function AssignMentorModal({
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={
+                  isSubmitting ||
+                  selectedChildIds.size === 0 ||
+                  (mentorPreview?.category === "support" && !previewingMentor)
+                }
                 className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {isSubmitting ? (
@@ -1527,7 +1685,9 @@ function AssignMentorModal({
                 ) : (
                   <Plus className="size-4" />
                 )}
-                <span>Assigner à la campagne</span>
+                <span>
+                  Confier {selectedChildIds.size > 0 ? `${selectedChildIds.size} enfant(s)` : "la sélection"}
+                </span>
               </button>
             </div>
           </form>
@@ -1722,37 +1882,56 @@ function AssignMentorModal({
                 <ul className="space-y-2">
                   {mentorResults.map((m) => {
                     const banned = m.status === "suspended" || m.status === "banned";
+                    const support = m.category === "support";
+                    const quotaLeft = Math.max(0, m.quota - m.active_assignments);
+                    const full = quotaLeft <= 0;
+                    const disabled = banned || support || full;
                     return (
                       <li
                         key={m.user_id}
                         className={
                           "flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 " +
-                          (banned
+                          (disabled
                             ? "border-ink/5 bg-surface/50 opacity-60"
                             : "border-ink/10 bg-surface")
                         }
                       >
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-ink truncate">{m.email}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-bold text-ink truncate">{m.email}</p>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                                support
+                                  ? "bg-sky-100 text-sky-800"
+                                  : "bg-purple-100 text-purple-800"
+                              }`}
+                            >
+                              {support ? "Soutien (Club)" : "Pro (Clinique)"}
+                            </span>
+                          </div>
                           <p className="text-[11px] font-semibold text-ink/50 truncate">
                             {[m.display_name, m.phone && `Tél : ${m.phone}`]
                               .filter(Boolean)
                               .join(" · ") || "—"}{" "}
-                            · {m.active_assignments} assignation
-                            {m.active_assignments > 1 ? "s" : ""} active
+                            · {m.active_assignments}/{m.quota} quota
+                            {support
+                              ? " · assignation par escouade uniquement"
+                              : full
+                                ? " · quota atteint"
+                                : ` · ${quotaLeft} place(s) restante(s)`}
                             {m.status !== "active" && ` · ${m.status}`}
                           </p>
                         </div>
                         <button
                           type="button"
-                          disabled={banned}
+                          disabled={disabled}
                           onClick={() => {
                             setSelectedMentor(m);
                             setStep(3);
                           }}
                           className="shrink-0 rounded-xl bg-ink px-3 py-1.5 text-xs font-bold text-white hover:bg-ink/90 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                          Choisir
+                          {support ? "Escouade" : full ? "Complet" : "Choisir"}
                         </button>
                       </li>
                     );
