@@ -189,6 +189,24 @@ async function handleSubscriptionCharge(data: SubscriptionChargeData | undefined
   const planCode = typeof plan === "object" && plan ? (plan.plan_code ?? null) : null;
   const userId = await findUserIdByEmail(supabaseAdmin, data.customer?.email);
 
+  // Vérification du montant (audit backend vague B) : le chemin one-shot
+  // (handleChargeSuccess) compare déjà amount_xof — le chemin abonnement
+  // stockait le montant Paystack comme vérité sans le confronter au prix du
+  // plan. Un plan Paystack modifié côté dashboard (ou une erreur de devise)
+  // aurait étendu l'accès au prix payé, pas au prix contractuel.
+  const { FAMILY_PLANS } = await import("@/lib/subscriptions.functions");
+  const chargedXof = Math.round(data.amount / 100);
+  const expectedXof =
+    planCode && planCode in FAMILY_PLANS
+      ? FAMILY_PLANS[planCode as keyof typeof FAMILY_PLANS].priceXof
+      : null;
+  if (expectedXof !== null && chargedXof !== expectedXof) {
+    console.error(
+      `[paystack-webhook] Montant d'abonnement inattendu pour ${data.reference}: ${chargedXof} ≠ ${expectedXof} FCFA — activation ignorée`,
+    );
+    return;
+  }
+
   await activateFamilySubscription(supabaseAdmin, {
     userId,
     reference: data.reference,

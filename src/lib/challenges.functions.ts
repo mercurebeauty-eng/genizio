@@ -329,26 +329,13 @@ async function trackMaterialSuggestions(items: { material_tags: string[]; title:
 
     for (const tag of uncovered) {
       const sample = items.find((i) => i.material_tags.includes(tag))?.title ?? null;
-      const { data: existing } = await supabaseAdmin
-        .from("material_suggestions")
-        .select("id, seen_count")
-        .eq("tag", tag)
-        .maybeSingle();
-
-      if (existing) {
-        await supabaseAdmin
-          .from("material_suggestions")
-          .update({
-            seen_count: existing.seen_count + 1,
-            last_seen_at: new Date().toISOString(),
-            sample_challenge_title: sample,
-          })
-          .eq("id", existing.id);
-      } else {
-        await supabaseAdmin
-          .from("material_suggestions")
-          .insert({ tag, sample_challenge_title: sample });
-      }
+      // Upsert atomique (audit vague B) : l'ancien select-puis-update perdait
+      // des incrémentations de seen_count sous concurrence, et le
+      // select-puis-insert pouvait lever une collision d'unicité sur tag.
+      await (supabaseAdmin as any).rpc("bump_material_suggestion", {
+        p_tag: tag,
+        p_sample_title: sample,
+      });
     }
   } catch (err) {
     console.error("trackMaterialSuggestions failed (non-fatal):", err);
@@ -2123,7 +2110,7 @@ export function safeJsonParse<T = any>(raw: string): T {
 // littéral, qui lui est déprécié le 2026-07-24 en faveur de deepseek-v4-flash.
 const DEEPSEEK_CHAT_MODEL = "deepseek-chat";
 
-async function callAnthropicVision(
+export async function callAnthropicVision(
   prompt: string,
   jsonMode: boolean,
   imageUrl: string | undefined,
@@ -2261,7 +2248,8 @@ async function callAnthropicVision(
       clearTimeout(timeoutId);
       attempt++;
 
-      const isFatal = err.message && err.message.includes("Fatal");
+      const isFatal =
+        (err.message && (err.message.includes("Fatal") || err.message.includes("429")));
       if (attempt >= maxRetries || isFatal) {
         throw err;
       }
@@ -2278,7 +2266,7 @@ async function callAnthropicVision(
 // DeepSeek expose une API compatible OpenAI (chat/completions) — même forme de
 // requête/réponse que la plupart des fournisseurs texte, contrairement au format
 // propriétaire d'Anthropic utilisé ci-dessus pour la vision.
-async function callDeepSeekText(
+export async function callDeepSeekText(
   prompt: string,
   jsonMode: boolean,
   maxOutputTokens: number,
@@ -2397,7 +2385,8 @@ async function callDeepSeekText(
       clearTimeout(timeoutId);
       attempt++;
 
-      const isFatal = err.message && err.message.includes("Fatal");
+      const isFatal =
+        (err.message && (err.message.includes("Fatal") || err.message.includes("429")));
       if (attempt >= maxRetries || isFatal) {
         throw err;
       }
@@ -2932,15 +2921,10 @@ export const recordChallengeTimeOver = createServerFn({ method: "POST" })
       existing = viaAdmin;
     }
 
-    const { data: already } = await supabaseAdmin
-      .from("observation_events")
-      .select("id")
-      .eq("child_id", existing.child_id)
-      .eq("type", "TIME_OVER")
-      .eq("payload->>challenge_id", existing.id)
-      .limit(1);
-    if (already && already.length > 0) return { ok: true };
-
+    // Dédup par contrainte DB (audit vague B) : index unique partiel
+    // observation_events_time_over_uniq (migration 20260906140000) +
+    // ignoreDuplicates — l'ancien check-then-insert laissait passer des
+    // doublons sous concurrence (deux signalements simultanés du même dépassement).
     const { error } = await supabaseAdmin.from("observation_events").insert({
       child_id: existing.child_id,
       user_id: context.userId,
@@ -2953,7 +2937,10 @@ export const recordChallengeTimeOver = createServerFn({ method: "POST" })
         time_limit_minutes: existing.time_limit_minutes,
       },
     });
-    if (error) throw new Error(error.message);
+    // 23505 = le TIME_OVER de ce (enfant, défi) est déjà enregistré — l'index
+    // unique partiel (migration 20260906140000) remplace le check-then-insert
+    // racé ; un doublon concurrent est un succès idempotent, pas une erreur.
+    if (error && error.code !== "23505") throw new Error(error.message);
     return { ok: true };
   });
 

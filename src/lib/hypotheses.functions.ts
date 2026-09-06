@@ -817,13 +817,23 @@ export async function processDiscriminantResult(
   // n'était jamais vérifiée. La colonne a été ajoutée (migration
   // 20260720170000) ; on vérifie maintenant explicitement l'erreur en plus, pour
   // qu'un futur problème similaire ne redevienne pas silencieux.
-  const { error: updateErr } = await supabaseAdmin
+  // CAS (audit vague B) : la réécriture du tableau d'hypothèses n'est écrite que
+  // si le cycle est toujours open — deux résultats discriminants concurrents ne
+  // peuvent plus écraser chacun la lecture de l'autre (lost update).
+  const { data: cycleClaimed, error: updateErr } = await supabaseAdmin
     .from("hypothesis_cycles")
     .update(updatePayload)
-    .eq("id", cycle.id);
+    .eq("id", cycle.id)
+    .eq("status", "open")
+    .select("id")
+    .maybeSingle();
 
   if (updateErr) {
     console.error("processDiscriminantResult: échec de la mise à jour bayésienne:", updateErr);
+    return { processed: false };
+  }
+  if (!cycleClaimed) {
+    // Cycle résolu/fermé entre la lecture et l'écriture : l'autre écrivain gagne.
     return { processed: false };
   }
 

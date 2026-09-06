@@ -396,3 +396,37 @@ export const listChildAcademicObservationsEducator = createServerFn({ method: "G
 
 export type { MentorDecisionProposalKind };
 
+
+// ── Réconciliation des crédits (audit backend vague B) ──────────────────────
+// Lecture seule de la vue v_entitlement_drift : les packs dont le compteur
+// sessions_used diverge du nombre réel de séances financées. Les courses
+// read-then-write sont corrigées (20260906140000) ; cette vue rend la dérive
+// résiduelle (historique) mesurable par l'Admin OS.
+
+export const getEntitlementDriftAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(async (): Promise<
+    Array<{
+      coverageId: string;
+      childId: string;
+      sessions: number;
+      sessionsUsed: number;
+      actualSessions: number;
+      drift: number;
+    }>
+  > => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await (supabaseAdmin as any)
+      .from("v_entitlement_drift")
+      .select("coverage_id, child_id, sessions, sessions_used, actual_pack_sessions, drift_sessions")
+      .limit(200);
+    if (error) throw new Error("Lecture de la réconciliation impossible.");
+    return (data ?? []).map((r: any) => ({
+      coverageId: r.coverage_id,
+      childId: r.child_id,
+      sessions: r.sessions,
+      sessionsUsed: r.sessions_used,
+      actualSessions: r.actual_pack_sessions,
+      drift: r.drift_sessions,
+    }));
+  });

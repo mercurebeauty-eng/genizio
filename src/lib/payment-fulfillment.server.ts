@@ -91,6 +91,9 @@ export async function applyPaystackEntitlement(
           updated_at: new Date().toISOString(),
         })
         .eq("id", metadata.order_id)
+        // CAS (audit vague B) : une commande annulée ne peut plus être
+        // confirmée par un webhook tardif.
+        .eq("status", "pending")
         .select("id")
         .single();
       if (error) throw new Error(`Erreur lors de la confirmation de la commande: ${error.message}`);

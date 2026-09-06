@@ -126,6 +126,99 @@ export const upsertSquadAdmin = createServerFn({ method: "POST" })
     return { squadId, memberCount: data.childProfileIds.length };
   });
 
+// Escouade alimentée depuis une campagne (deux-modèles) : une campagne ONG peut
+// financer des Clubs du Samedi — l'admin sélectionne 6 à 8 enfants de la cohorte
+// et les confie à un mentor de Soutien. Mêmes bornes que upsertSquadAdmin, avec en
+// plus : les enfants doivent appartenir à la cohorte de la campagne et ne pas être
+// déjà pris en 1-on-1 (un enfant = un accompagnement).
+const AssignSquadFromCampaignInput = z.object({
+  campaignId: z.string().uuid(),
+  mentorUserId: z.string().uuid(),
+  childProfileIds: z
+    .array(z.string().uuid())
+    .min(6, "Une escouade compte au moins 6 enfants.")
+    .max(8, "Une escouade est limitée à 8 enfants."),
+  squadId: z.string().uuid().optional(),
+});
+
+export const assignSquadFromCampaignAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => AssignSquadFromCampaignInput.parse(input))
+  .handler(async ({ data }): Promise<{ squadId: string; memberCount: number }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as any;
+
+    const category = await loadMentorCategory(db, data.mentorUserId);
+    if (category !== "support") {
+      throw new Error(
+        "Les escouades sont réservées aux mentors de Soutien (Club du Samedi) — ce compte est un mentor Pro.",
+      );
+    }
+
+    // Cohorte de la campagne : chaque enfant choisi doit y figurer.
+    const { data: enrollments } = await db
+      .from("season_enrollments")
+      .select("child_id")
+      .eq("campaign_id", data.campaignId);
+    const cohortChildIds = new Set((enrollments ?? []).map((e: any) => e.child_id as string));
+    const outside = data.childProfileIds.filter((id) => !cohortChildIds.has(id));
+    if (outside.length > 0) {
+      throw new Error(
+        `${outside.length} enfant(s) sélectionné(s) ne sont pas inscrits dans cette campagne.`,
+      );
+    }
+
+    // Un enfant déjà suivi 1-on-1 ne peut pas rejoindre une escouade.
+    const { data: activeOnes } = await db
+      .from("mentors")
+      .select("child_profile_id")
+      .in("child_profile_id", data.childProfileIds)
+      .is("removed_at", null);
+    if ((activeOnes ?? []).length > 0) {
+      throw new Error(
+        `${(activeOnes ?? []).length} enfant(s) ont déjà un mentor 1-on-1 — retirez-les de la sélection.`,
+      );
+    }
+
+    // Même logique d'écriture que upsertSquadAdmin (max 2 escouades, membres remplacés).
+    const quota = MENTOR_CATEGORY_QUOTAS.support;
+    const { data: activeSquads } = await db
+      .from("mentor_squads")
+      .select("id")
+      .eq("mentor_user_id", data.mentorUserId)
+      .eq("status", "active");
+    let squadId: string;
+    if (data.squadId) {
+      if (!(activeSquads ?? []).some((s: any) => s.id === data.squadId)) {
+        throw new Error("Escouade introuvable pour ce mentor.");
+      }
+      squadId = data.squadId;
+    } else {
+      if ((activeSquads ?? []).length >= quota.maxSquads) {
+        throw new Error(
+          `Ce mentor anime déjà ${quota.maxSquads} escouades (le maximum) — ajustez une escouade existante.`,
+        );
+      }
+      const { data: created, error } = await db
+        .from("mentor_squads")
+        .insert({ mentor_user_id: data.mentorUserId, name: "Escouade du Samedi" })
+        .select("id")
+        .single();
+      if (error) throw new Error(`Création de l'escouade impossible : ${error.message}`);
+      squadId = created.id;
+    }
+
+    await db.from("mentor_squad_members").delete().eq("squad_id", squadId).is("removed_at", null);
+    await db.from("mentor_squad_members").insert(
+      data.childProfileIds.map((childProfileId) => ({
+        squad_id: squadId,
+        child_profile_id: childProfileId,
+      })),
+    );
+
+    return { squadId, memberCount: data.childProfileIds.length };
+  });
+
 const MemberAttendance = z.object({
   childProfileId: z.string().uuid(),
   present: z.boolean(),
@@ -558,6 +651,19 @@ export const declareClubSession = createServerFn({ method: "POST" })
       .maybeSingle();
     const atelierKey = getAtelierForDate(squad.id, data.occurredAt, (lastSession?.atelier_key as AtelierKey) ?? null);
 
+    // Anti-ferme (audit vague B) : redéclarer une journée dont la séance est
+    // VALIDÉE ne doit pas la remettre en brouillon ni écraser les présences —
+    // c'était le multiplicateur du payout contrôlé par le mentor.
+    const { data: existing } = await db
+      .from("mentor_club_sessions")
+      .select("id, status")
+      .eq("squad_id", squad.id)
+      .eq("occurred_at", data.occurredAt)
+      .maybeSingle();
+    if (existing?.status === "validated") {
+      throw new Error("La séance de ce jour est déjà validée — impossible de la redéclarer.");
+    }
+
     const { data: created, error } = await db
       .from("mentor_club_sessions")
       .upsert(
@@ -573,7 +679,7 @@ export const declareClubSession = createServerFn({ method: "POST" })
       )
       .select("id")
       .single();
-    if (error) throw new Error(`Déclaration impossible : ${error.message}`);
+    if (error) throw new Error("Déclaration de séance impossible.");
     return { sessionId: created.id, atelierKey };
   });
 
@@ -606,7 +712,16 @@ export const submitClubSessionProof = createServerFn({ method: "POST" })
     }
 
     // 1. Empreinte SERVEUR sur les octets reçus (gratuit, avant tout appel IA).
-    await db.from("mentor_club_sessions").update({ status: "submitted" }).eq("id", data.sessionId);
+    // CAS : le passage submitted n'écrase pas une séance déjà traitée
+    // (double-soumission concurrente = un seul coureur).
+    const { data: submittedRow } = await db
+      .from("mentor_club_sessions")
+      .update({ status: "submitted" })
+      .eq("id", data.sessionId)
+      .in("status", ["draft", "rejected", "flagged"])
+      .select("id")
+      .maybeSingle();
+    if (!submittedRow) throw new Error("Séance déjà en cours de traitement ou validée.");
     const fp = await fingerprintProofImage(data.imageBase64, data.mediaType);
 
     let sameMentor: number | null = null;
@@ -697,11 +812,12 @@ export const submitClubSessionProof = createServerFn({ method: "POST" })
     const visionVerdict = {
       ...(vision ?? {}),
       arbitrageReasons: arbitrage.reasons,
-      payoutXof: finalStatus === "validated" ? payout.amountXof : null,
       fingerprintMethod: fp.method,
       atelierKey: session.atelier_key,
     };
 
+    // CAS : l'écriture finale ne touche que la séance encore au stade submitted
+    // (un flag admin concurrent gagne, et le payout n'est jamais écrit deux fois).
     await db
       .from("mentor_club_sessions")
       .update({
@@ -714,8 +830,13 @@ export const submitClubSessionProof = createServerFn({ method: "POST" })
         debrief_note: data.debriefNote ?? null,
         rejection_reason: arbitrage.decision === "reject" ? arbitrage.reasons.join(" ") : null,
         validated_at: finalStatus === "validated" ? new Date().toISOString() : null,
+        // Ledger payout en COLONNE (audit vague B) : le jsonb garde l'arbitrage,
+        // le montant dû est filtrable/sommable ici.
+        payout_xof: finalStatus === "validated" ? payout.amountXof : null,
+        payout_status: finalStatus === "validated" ? (payout.payable ? "pending" : "frozen") : "pending",
       })
-      .eq("id", data.sessionId);
+      .eq("id", data.sessionId)
+      .eq("status", "submitted");
 
     // 7. Validation → débriefing automatique aux parents des enfants présents.
     if (finalStatus === "validated") {
@@ -779,3 +900,54 @@ export const listMyClubSessions = createServerFn({ method: "GET" })
   });
 
 export { ATELIER_KEYS };
+
+// ── Ledger admin : marquer les séances de club payées (audit vague B) ────────
+
+const MarkClubSessionsPaidInput = z.object({
+  mentorUserId: z.string().uuid(),
+  /** Référence de virement/retrait (Mobile Money, banque) — traçabilité du paiement. */
+  reference: z.string().min(3).max(120),
+  /** Séances précises ; à défaut, toutes les pending du mentor. */
+  sessionIds: z.array(z.string().uuid()).max(200).optional(),
+});
+
+export const markClubSessionsPaidAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => MarkClubSessionsPaidInput.parse(input))
+  .handler(async ({ data, context }): Promise<{ marked: number; totalXof: number }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as any;
+    const adminUserId = (context as any).claims?.sub as string;
+
+    let query = db
+      .from("mentor_club_sessions")
+      .select("id, payout_xof")
+      .eq("mentor_user_id", data.mentorUserId)
+      .eq("payout_status", "pending")
+      .eq("status", "validated");
+    if (data.sessionIds?.length) query = query.in("id", data.sessionIds);
+    const { data: pending, error } = await query;
+    if (error) throw new Error("Lecture des séances pending impossible.");
+    if (!pending?.length) return { marked: 0, totalXof: 0 };
+
+    const ids = pending.map((p: any) => p.id as string);
+    const totalXof = pending.reduce((sum: number, p: any) => sum + (p.payout_xof ?? 0), 0);
+
+    // CAS : pending → paid seulement (jamais double-paiement d'une ligne déjà soldée).
+    const { error: updErr } = await db
+      .from("mentor_club_sessions")
+      .update({
+        payout_status: "paid",
+        paid_at: new Date().toISOString(),
+        paid_reference: data.reference,
+      })
+      .in("id", ids)
+      .eq("payout_status", "pending");
+    if (updErr) throw new Error("Marquage du paiement impossible.");
+
+    console.log(
+      `[club-payout] ${ids.length} séance(s) marquées payées pour mentor ${data.mentorUserId.slice(0, 8)}… ` +
+        `(${totalXof} FCFA, réf ${data.reference}, par admin ${adminUserId.slice(0, 8)}…)`,
+    );
+    return { marked: ids.length, totalXof };
+  });

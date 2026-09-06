@@ -2405,19 +2405,44 @@ export const approveMentorSessionAdmin = createServerFn({ method: "POST" })
 
 export const markMentorSessionsPaidAdmin = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
-  .validator((input: unknown) => z.object({ mentorUserId: z.string().uuid() }).parse(input))
+  .validator((input: unknown) =>
+    z
+      .object({
+        mentorUserId: z.string().uuid(),
+        /** Référence du virement/retrait (Mobile Money, banque) — traçabilité (audit vague B). */
+        reference: z.string().min(3).max(120),
+        /** Séances précises ; à défaut, toutes les approved du mentor. */
+        sessionIds: z.array(z.string().uuid()).max(500).optional(),
+      })
+      .parse(input),
+  )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as any;
 
-    const { data: res, error } = await (supabaseAdmin as any)
+    let read = db
       .from("mentor_sessions")
-      .update({ status: "paid" })
+      .select("id, payout_xof")
       .eq("mentor_user_id", data.mentorUserId)
+      .eq("status", "approved");
+    if (data.sessionIds?.length) read = read.in("id", data.sessionIds);
+    const { data: approved, error: readErr } = await read;
+    if (readErr) throw new Error("Lecture des séances approuvées impossible.");
+    if (!approved?.length) return { success: true, paidCount: 0, totalXof: 0 };
+
+    const ids = approved.map((a: any) => a.id as string);
+    const totalXof = approved.reduce((sum: number, a: any) => sum + (a.payout_xof ?? 0), 0);
+
+    // CAS : approved → paid seulement (jamais double-paiement d'une ligne soldée).
+    const { data: res, error } = await db
+      .from("mentor_sessions")
+      .update({ status: "paid", paid_at: new Date().toISOString(), paid_reference: data.reference })
+      .in("id", ids)
       .eq("status", "approved")
       .select("id");
-    if (error) throw new Error(error.message);
+    if (error) throw new Error("Marquage du paiement impossible.");
 
-    return { success: true, paidCount: (res ?? []).length };
+    return { success: true, paidCount: (res ?? []).length, totalXof };
   });
 
 // ── Feedback famille (Vague C, V2) ─────────────────────────────────────────────
