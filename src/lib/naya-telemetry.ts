@@ -496,10 +496,18 @@ export function calculateNayaTelemetry(raw: {
     0,
   );
   const peakCeilingCostUsd = round4(
-    peakChatCosts.costUsd + peakReasonerCosts.costUsd + visionCosts.costUsd,
+    peakChatCosts.costUsd +
+      peakReasonerCosts.costUsd +
+      visionCosts.costUsd +
+      glmCosts.costUsd +
+      qwenCosts.costUsd,
   );
   const peakCeilingCostXof =
-    peakChatCosts.costXof + peakReasonerCosts.costXof + visionCosts.costXof;
+    peakChatCosts.costXof +
+    peakReasonerCosts.costXof +
+    visionCosts.costXof +
+    glmCosts.costXof +
+    qwenCosts.costXof;
 
   const defisChatCosts = calculateDeepSeekChatCost(defisChatInput, defisChatOutput);
   const defisVisionCosts = calculateVisionSonnetCost(defisVisionInput, defisVisionOutput);
