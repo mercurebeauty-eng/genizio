@@ -460,6 +460,32 @@ export const auditSupportMentorSquadSafeguardsAdmin = createServerFn({ method: "
       evaluations,
     });
 
-    return auditResult;
+    // 6. Appliquer la décision au profil mentor (anti-régression câblé). Mapping
+    // standing → mentor_profiles.status (enum réel : active/warning/suspended/banned) :
+    //   frozen_suspended → suspended, warning/probation → warning, good_standing → active.
+    // Le ban n'est JAMAIS posé automatiquement (décision humaine réservée à l'admin) :
+    // on ne dégrade jamais un statut banned existant.
+    const mappedStatus =
+      auditResult.standing === "frozen_suspended"
+        ? "suspended"
+        : auditResult.standing === "warning" || auditResult.standing === "probation"
+          ? "warning"
+          : "active";
+    if (profile?.status !== "banned" && mappedStatus !== profile?.status) {
+      await db
+        .from("mentor_profiles")
+        .update({ status: mappedStatus })
+        .eq("mentor_user_id", data.mentorUserId);
+    }
+
+    return {
+      ...auditResult,
+      appliedStatus:
+        profile?.status === "banned"
+          ? "banned (conservé — décision humaine)"
+          : mappedStatus !== profile?.status
+            ? mappedStatus
+            : `inchangé (${profile?.status ?? "active"})`,
+    };
   });
 

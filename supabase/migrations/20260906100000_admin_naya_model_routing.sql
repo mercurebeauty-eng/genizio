@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.admin_naya_settings (
 ALTER TABLE public.admin_naya_settings ENABLE ROW LEVEL SECURITY;
 
 -- Politique de lecture pour les utilisateurs authentifiés
+DROP POLICY IF EXISTS "admin_naya_settings_select_authenticated" ON public.admin_naya_settings;
 CREATE POLICY "admin_naya_settings_select_authenticated"
     ON public.admin_naya_settings
     FOR SELECT
@@ -23,6 +24,7 @@ CREATE POLICY "admin_naya_settings_select_authenticated"
     USING (true);
 
 -- Politique de mise à jour restreinte aux administrateurs (service role / requireAdmin dans le code d'application)
+DROP POLICY IF EXISTS "admin_naya_settings_update_service" ON public.admin_naya_settings;
 CREATE POLICY "admin_naya_settings_update_service"
     ON public.admin_naya_settings
     FOR ALL
@@ -43,6 +45,14 @@ CREATE TABLE IF NOT EXISTS public.app_settings (
 );
 
 ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "app_settings_select_authenticated" ON public.app_settings;
+CREATE POLICY "app_settings_select_authenticated"
+    ON public.app_settings FOR SELECT TO authenticated USING (true);
+
+DROP POLICY IF EXISTS "app_settings_service_all" ON public.app_settings;
+CREATE POLICY "app_settings_service_all"
+    ON public.app_settings FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 INSERT INTO public.app_settings (key, value)
 VALUES ('naya_model_routing', '{"challenge_model": "deepseek-v4-flash", "fallback_enabled": true}'::jsonb)

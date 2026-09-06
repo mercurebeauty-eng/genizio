@@ -4,6 +4,7 @@ import { useSession } from "@/hooks/use-session";
 import {
   listQuarterlySafetyAudits,
   recordQuarterlySafetyAudit,
+  auditSupportMentorSquadSafeguardsAdmin,
   type ChildSafetyAuditDetail,
 } from "@/lib/safeguarding.functions";
 import {
@@ -159,6 +160,10 @@ export function AdminSafeguardingAudits({
     <div className="space-y-6">
       {/* Boucle Tripartite (Phase 4) — file de propositions + rapports trimestriels */}
       <TripartiteDecisionQueue quarterPeriod={quarterPeriod.replace("-Q", "-T")} onDataChanged={onDataChanged} />
+
+      {/* Anti-régression escouade (deux-modèles) : audit des garde-fous d'un mentor
+          de Soutien — la décision (warning/suspension) est appliquée au profil. */}
+      <SquadSafeguardAuditBox onDataChanged={onDataChanged} />
 
       {/* Explication Génizio Care */}
       <div className="rounded-3xl border border-emerald-200/80 bg-emerald-50/70 p-5 shadow-sm">
@@ -667,6 +672,90 @@ function TripartiteDecisionQueue({
             );
           })
         )}
+      </div>
+    </div>
+  );
+}
+
+// Audit anti-régression d'un mentor de Soutien (deux-modèles) : l'admin saisit
+// l'ID utilisateur du mentor, le serveur arbitre (fraude + régression) et applique
+// le statut résultant au profil. Résultat affiché en direct.
+function SquadSafeguardAuditBox({
+  onDataChanged,
+}: {
+  onDataChanged?: () => void | Promise<void>;
+}) {
+  const { session } = useSession();
+  const [mentorUserId, setMentorUserId] = useState("");
+  const [auditing, setAuditing] = useState(false);
+  const [result, setResult] = useState<{
+    standing: string;
+    actionRequired: string;
+    appliedStatus: string;
+    impactScore: number;
+  } | null>(null);
+
+  const auditFn = useServerFn(auditSupportMentorSquadSafeguardsAdmin);
+
+  const handleAudit = async () => {
+    if (!mentorUserId.trim()) return;
+    setAuditing(true);
+    setResult(null);
+    try {
+      const opts = session?.access_token
+        ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+        : {};
+      const res = await auditFn({ data: { mentorUserId: mentorUserId.trim() }, ...opts });
+      setResult(res as any);
+      toast.success("Audit des garde-fous exécuté — décision appliquée au profil.");
+      void onDataChanged?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de l'audit.");
+    } finally {
+      setAuditing(false);
+    }
+  };
+
+  return (
+    <div className="rounded-3xl border border-amber-200/80 bg-amber-50/60 p-5 shadow-sm">
+      <div className="flex gap-3">
+        <AlertTriangle className="size-5 text-amber-700 shrink-0 mt-0.5" />
+        <div className="min-w-0 flex-1 space-y-2">
+          <p className="font-black text-amber-900 text-sm">
+            Anti-régression escouade — audit des garde-fous d'un mentor de Soutien
+          </p>
+          <p className="text-xs text-amber-800/90 leading-relaxed">
+            Arbitrage déterministe (fraude photos + régression des enfants). Décision appliquée
+            au profil : warning (1 cycle) ou suspension (2 cycles / fraude). Le bannissement
+            reste une décision humaine.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              value={mentorUserId}
+              onChange={(e) => setMentorUserId(e.target.value)}
+              placeholder="UUID du mentor (mentor_user_id)…"
+              className="flex-1 min-w-0 rounded-2xl border border-amber-300 bg-white px-3 py-2 text-xs font-bold text-ink focus:outline-none focus:ring-2 focus:ring-amber-400/50"
+            />
+            <button
+              type="button"
+              onClick={() => void handleAudit()}
+              disabled={auditing || !mentorUserId.trim()}
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-amber-600 hover:bg-amber-700 px-4 py-2 text-xs font-bold text-white transition-all cursor-pointer disabled:opacity-50"
+            >
+              {auditing ? <Loader2 className="size-3.5 animate-spin" /> : <AlertTriangle className="size-3.5" />}
+              Lancer l'audit
+            </button>
+          </div>
+          {result && (
+            <div className="rounded-2xl border border-amber-300 bg-white px-3 py-2.5 text-xs space-y-1">
+              <p className="font-black text-amber-900">
+                Décision : {result.standing} · Impact {result.impactScore}/100 · Statut appliqué :{" "}
+                <span className="font-black">{result.appliedStatus}</span>
+              </p>
+              <p className="font-semibold text-amber-800/90">{result.actionRequired}</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
