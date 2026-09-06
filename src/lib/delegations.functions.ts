@@ -202,8 +202,10 @@ export const listMyEducatorDelegations = createServerFn({ method: "GET" })
       .gt("valid_until", now);
 
     if (error || !delegations) {
+      // Audit C6 : erreur réseau ≠ « aucune délégation » (l'espace éducateur
+      // afficherait une liste vide trompeuse).
       console.error("Erreur listMyEducatorDelegations:", error);
-      return [];
+      throw new Error("Chargement de vos délégations impossible.");
     }
 
     // Récupération des informations synthétiques des enfants

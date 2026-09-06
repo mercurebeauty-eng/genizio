@@ -65,10 +65,17 @@ export function checkRateLimit(ip: string, options: RateLimitOptions): boolean {
 }
 
 export function getClientIp(request: Request): string {
-  // Récupère l'IP réelle passée par le reverse proxy (ex: Cloudflare, Vercel)
+  // x-real-ip : posé par le proxy (Vercel), non contrôlable par le client.
+  const realIp = request.headers.get("x-real-ip");
+  if (realIp) return realIp.trim();
+  // x-forwarded-for : la chaîne est « client, proxy1, proxy2 » — le PREMIER hop
+  // est écrit par le client (spoofable). On prend le DERNIER hop, ajouté par
+  // notre propre proxy. (Audit backend vague C : l'ancien code faisait confiance
+  // au premier → contournement trivial du rate limit.)
   const forwardedFor = request.headers.get("x-forwarded-for");
   if (forwardedFor) {
-    return forwardedFor.split(",")[0].trim();
+    const hops = forwardedFor.split(",").map((h) => h.trim()).filter(Boolean);
+    if (hops.length > 0) return hops[hops.length - 1];
   }
   return "unknown-ip";
 }

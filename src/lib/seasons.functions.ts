@@ -316,7 +316,8 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
   .validator((input: unknown) =>
     z
       .object({
-        code: z.string().min(4),
+        // Audit C10 : longueur maximale (un code de 1 Mo partait en requête).
+    code: z.string().min(4).max(40),
         childId: z.string().uuid(),
       })
       .parse(input),

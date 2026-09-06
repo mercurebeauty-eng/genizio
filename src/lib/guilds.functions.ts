@@ -165,7 +165,9 @@ export const getGuildCommunity = createServerFn({ method: "POST" })
         .select("id", { count: "exact", head: true })
         .in("child_id", memberIds)
         .eq("status", "completed")
-        .gte("completed_at", startOfMonth.toISOString());
+        .gte("completed_at", startOfMonth.toISOString())
+        // Audit C4 : défis supprimés exclus des stats mensuelles de guilde.
+        .is("deleted_at", null);
       completedThisMonth = count ?? 0;
     }
 

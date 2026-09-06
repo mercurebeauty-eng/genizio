@@ -183,8 +183,10 @@ export const listChildSafetyReports = createServerFn({ method: "GET" })
 
     const { data: rows, error } = await query;
     if (error) {
+      // Audit C6 : une panne de lecture ne doit PAS se déguiser en « aucun
+      // signalement » — l'Admin OS afficherait une file vide pendant un incident.
       console.error("Erreur listChildSafetyReports:", error);
-      return [];
+      throw new Error("Chargement des signalements de sécurité impossible.");
     }
 
     return (rows ?? []).map((r: any) => ({

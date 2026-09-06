@@ -39,7 +39,8 @@ export const createCampaignAdmin = createServerFn({ method: "POST" })
   .validator((input: any) =>
     z
       .object({
-        name: z.string().min(3),
+        // Audit C10 : bornes hautes.
+  name: z.string().min(3).max(120),
         description: z.string().optional(),
         managerEmail: z.string().email(),
         targetCount: z.number().int().positive().default(100),
@@ -887,7 +888,10 @@ export const getNgoDashboardData = createServerFn({ method: "GET" })
     const { data: mentorRows } = await (supabaseAdmin as any)
       .from("mentors")
       .select("mentor_user_id")
-      .eq("campaign_id", campaignId);
+      .eq("campaign_id", campaignId)
+      // Audit C4 : ne compter que les assignations ACTIVES (les retirées
+      // gonflaient les stats mentor de la campagne).
+      .is("removed_at", null);
 
     // Emails des mentors — résolution CIBLÉE (review 2026-08-13) : l'ancien
     // listAllUsers paginait TOUT l'annuaire du projet à chaque visite du dashboard
@@ -989,7 +993,10 @@ export const assignCampaignMentor = createServerFn({ method: "POST" })
     const { data: existingSup } = await (supabaseAdmin as any)
       .from("mentors")
       .select("child_profile_id")
-      .in("child_profile_id", cohortChildIds);
+      .in("child_profile_id", cohortChildIds)
+      // Audit C4 : un mentor RETIRÉ ne doit plus faire compter son enfant comme
+      // « déjà mentoré » — sinon l'auto-assignation le saute pour toujours.
+      .is("removed_at", null);
     const alreadyMentored = new Set(
       (existingSup ?? []).map((s: any) => s.child_profile_id as string),
     );

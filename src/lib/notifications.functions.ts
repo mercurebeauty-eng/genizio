@@ -36,7 +36,8 @@ export const markNotificationsRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) =>
     z
-      .object({ ids: z.array(z.string().uuid()).optional() })
+      // Audit C10 : borné (un .in("id", ids) non plafonné était un DoS trivial).
+      .object({ ids: z.array(z.string().uuid()).max(200).optional() })
       .optional()
       .parse(input),
   )

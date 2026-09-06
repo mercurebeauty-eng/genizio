@@ -2,16 +2,9 @@
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-function getCurrentAcademicYear(): string {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = date.getMonth(); // 0-11
-  // If we are before August (month 7), the academic year started last year
-  if (month < 7) {
-    return (year - 1).toString() + "-" + year.toString();
-  }
-  return year.toString() + "-" + (year + 1).toString();
-}
+// Helper local supprimé (audit C9) — source unique : currentAcademicYear
+// (academic-year.ts), même coupure août, testée.
+import { currentAcademicYear as getCurrentAcademicYear } from "@/lib/academic-year";
 
 const LinkChildSchema = z.object({
   childId: z.string().uuid(),
@@ -101,19 +94,16 @@ export const getSchoolImpactDashboard = createServerFn({ method: "GET" })
       .eq("school_id", school.id)
       .eq("status", "active");
     
+    // Audit C7 : ces chiffres étaient INVENTÉS (12 anomalies, top talents,
+    // observations fictives) et présentés comme des mesures réelles à un
+    // directeur d'établissement. Zéros honnêtes en attendant les signaux
+    // tripartites réels (Phase 4 les alimentera via les rapports trimestriels).
     return {
       totalActiveChildren: totalActiveChildren || 0,
       totalTeachersInvolved: 0,
-      anomaliesDetected: 12,
-      anomaliesResolved: 4,
-      topTalents: [
-        { name: "Logique-Mathématique", count: 15 },
-        { name: "Visuelle-Spatiale", count: 8 },
-        { name: "Kinesthésique", count: 5 }
-      ],
-      recentObservations: [
-        "Un élève a montré des signes de fatigue en milieu de journée.",
-        "Plusieurs élèves de 4ème réagissent bien aux supports visuels."
-      ]
+      anomaliesDetected: 0,
+      anomaliesResolved: 0,
+      topTalents: [],
+      recentObservations: []
     };
   });

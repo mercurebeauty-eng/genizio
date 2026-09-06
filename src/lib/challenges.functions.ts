@@ -449,7 +449,9 @@ async function checkAndAwardBadge(
       .select("id", { count: "exact", head: true })
       .eq("child_id", childId)
       .eq("domain", domain)
-      .eq("status", "completed");
+      .eq("status", "completed")
+      // Audit C4 : un défi supprimé ne doit plus compter pour un badge.
+      .is("deleted_at", null);
     if ((count ?? 0) < BADGE_THRESHOLD) return null;
 
     const { error } = await supabaseClient
@@ -2213,7 +2215,8 @@ export async function callAnthropicVision(
 
         if (response.status === 429) {
           throw new Error(
-            "Quota Anthropic atteint (429). Veuillez patienter une minute avant de réessayer.",
+            // 429 = le fournisseur limite déjà : le retenter l'aggrave (audit C2).
+            "Quota Anthropic atteint (429) - Fatal. Veuillez patienter une minute avant de réessayer.",
           );
         }
         if (response.status === 503 || response.status >= 500) {
@@ -2345,7 +2348,8 @@ export async function callDeepSeekText(
 
         if (response.status === 429) {
           throw new Error(
-            "Quota DeepSeek atteint (429). Veuillez patienter une minute avant de réessayer.",
+            // 429 = le fournisseur limite déjà : le retenter l'aggrave (audit C2).
+            "Quota DeepSeek atteint (429) - Fatal. Veuillez patienter une minute avant de réessayer.",
           );
         }
         if (response.status === 503 || response.status >= 500) {
@@ -3384,7 +3388,9 @@ Réponds STRICTEMENT en JSON valide avec ce format :
     // recommendChallengesForChild ne génère que si l'enfant n'a plus aucun défi en attente.
     try {
       const { recommendChallengesForChild } = await import("@/lib/recommendations.functions");
-      void recommendChallengesForChild({ data: { childId: challenge.child_id } });
+      void recommendChallengesForChild({ data: { childId: challenge.child_id } }).catch((err) =>
+      console.error("Non-fatal: pré-génération recommandations échouée:", err),
+    );
     } catch (err) {
       console.error("Non-fatal: pré-génération de la prochaine mission a échoué", err);
     }
@@ -3677,7 +3683,9 @@ export const submitChallengeNotCompleted = createServerFn({ method: "POST" })
       // parent retrouve "aucun défi en cours" à sa prochaine visite.
       try {
         const { recommendChallengesForChild } = await import("@/lib/recommendations.functions");
-        void recommendChallengesForChild({ data: { childId: challenge.child_id } });
+        void recommendChallengesForChild({ data: { childId: challenge.child_id } }).catch((err) =>
+      console.error("Non-fatal: pré-génération recommandations échouée:", err),
+    );
       } catch (err) {
         console.error("Non-fatal: pré-génération de la prochaine mission a échoué", err);
       }
@@ -3823,7 +3831,9 @@ export async function submitDeclarativeProofCore(params: {
   // recommendChallengesForChild (ne se déclenche que si plus aucun défi en attente).
   try {
     const { recommendChallengesForChild } = await import("@/lib/recommendations.functions");
-    void recommendChallengesForChild({ data: { childId: challenge.child_id } });
+    void recommendChallengesForChild({ data: { childId: challenge.child_id } }).catch((err) =>
+      console.error("Non-fatal: pré-génération recommandations échouée:", err),
+    );
   } catch (err) {
     console.error("Non-fatal: pré-génération de la prochaine mission a échoué", err);
   }
@@ -4714,7 +4724,24 @@ Texte brut uniquement, aucune syntaxe Markdown.`;
   });
 
 const AnalyzePostInput = z.object({
-  imageUrl: z.string().url(),
+  // Allowlist (audit C2) : imageUrl est fetché CÔTÉ SERVEUR par le chemin
+  // vision — sans restriction, un utilisateur pouvait pousser le serveur à
+  // toucher une URL interne (SSRF) et brûler du quota vision sur une image
+  // arbitraire. Seules les preuves hébergées sur le stockage Supabase sont admises.
+  imageUrl: z
+    .string()
+    .url()
+    .refine(
+      (u) => {
+        try {
+          const host = new URL(u).hostname;
+          return host.endsWith(".supabase.co") || host.endsWith(".supabase.in");
+        } catch {
+          return false;
+        }
+      },
+      "URL de preuve invalide (seuls les fichiers du stockage Génizio sont acceptés).",
+    ),
   domain: z.string().optional(),
 });
 

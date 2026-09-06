@@ -193,7 +193,11 @@ export const createEventAdmin = createServerFn({ method: "POST" })
 
       await (supabaseAdmin as any)
         .from("mentors")
-        .upsert(mentorAssignments, { onConflict: "mentor_user_id,child_profile_id" });
+        // Audit C4 : un upsert sur une ligne soft-retirée doit la RÉACTIVER
+        // (removed_at:null) — sinon la réassignation d'événement était silencieuse.
+        .upsert(mentorAssignments.map((a: any) => ({ ...a, removed_at: null })), {
+          onConflict: "mentor_user_id,child_profile_id",
+        });
     }
 
     return { success: true, eventId: newEventId };
