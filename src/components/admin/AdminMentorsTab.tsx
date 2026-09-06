@@ -54,6 +54,7 @@ import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { AdminSafeguardingAudits } from "./AdminSafeguardingAudits";
 import { AdminSafetyReports } from "./AdminSafetyReports";
 import { getSafeguardingPendingCountAdmin } from "@/lib/safeguarding.functions";
+import { listSquadsAdmin, upsertSquadAdmin } from "@/lib/saturday-clubs.functions";
 
 // Bandeau qui sépare l'annuaire en deux cadres : Pro (Clinique) d'abord, Soutien (Club) ensuite.
 function MentorSectionHeader({
@@ -134,6 +135,8 @@ export function AdminMentorsTab({
   const [mentorSubTab, setMentorSubTab] = useState<"directory" | "audits" | "safety">("directory");
   const [openReportsCount, setOpenReportsCount] = useState(0);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  // Escouades (deux-modèles) : modal dédié pour le cadre Soutien.
+  const [squadModalFor, setSquadModalFor] = useState<MentorGroup | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -898,6 +901,16 @@ export function AdminMentorsTab({
                             Bannir
                           </button>
                         )}
+                        {/* Deux modèles : le mentor de Soutien gère ses escouades ici. */}
+                        {g.category === "support" && g.status !== "banned" && (
+                          <button
+                            onClick={() => setSquadModalFor(g)}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700 hover:bg-sky-100 transition-all cursor-pointer"
+                          >
+                            <Tent className="size-3.5" />
+                            Escouade
+                          </button>
+                        )}
                       </div>
 
                       {/* Ledger payout (Vague C) : dû des séances approuvées + gestion. */}
@@ -1250,6 +1263,18 @@ export function AdminMentorsTab({
             setIsAssignModalOpen(false);
             void refreshSilently();
             void onDataChanged?.();
+          }}
+        />
+      )}
+
+      {/* Escouades (deux-modèles) : constitution 6-8 enfants pour un mentor de Soutien. */}
+      {squadModalFor && (
+        <SquadModal
+          mentor={squadModalFor}
+          onClose={() => setSquadModalFor(null)}
+          onSuccess={() => {
+            setSquadModalFor(null);
+            void refreshSilently();
           }}
         />
       )}
@@ -2004,3 +2029,303 @@ function AssignMentorModal({
     </div>
   );
 }
+
+// Modale escouade (deux-modèles) : l'admin compose l'escouade (6 à 8 enfants) d'un
+// mentor de Soutien via le flux Parent → Enfant. Le mentor ne choisit jamais ses
+// membres : il consulte la sienne et déclare les séances (SaturdayClubSquadView).
+function SquadModal({
+  mentor,
+  onClose,
+  onSuccess,
+}: {
+  mentor: MentorGroup;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const { session } = useSession();
+  const [name, setName] = useState("Escouade du Samedi");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Membres actuels (escouades actives du mentor).
+  const [existingSquads, setExistingSquads] = useState<
+    Array<{ id: string; name: string; members: Array<{ id: string; name: string }> }>
+  >([]);
+  const [loadingSquads, setLoadingSquads] = useState(true);
+
+  // Sélecteur Parent → Enfants.
+  const [parentQuery, setParentQuery] = useState("");
+  const [parentResults, setParentResults] = useState<ParentSearchResult[]>([]);
+  const [parentSearched, setParentSearched] = useState(false);
+  const [childrenOfParent, setChildrenOfParent] = useState<ChildOfParentResult[]>([]);
+  const [loadingChildren, setLoadingChildren] = useState(false);
+  // Sélection courante : id → nom (pré-remplie avec l'escouade existante via toggle).
+  const [selected, setSelected] = useState<Map<string, string>>(new Map());
+
+  const opts = () =>
+    session?.access_token ? { headers: { Authorization: `Bearer ${session.access_token}` } } : {};
+
+  const squadsFn = useServerFn(listSquadsAdmin);
+  const upsertFn = useServerFn(upsertSquadAdmin);
+  const searchParentsFn = useServerFn(searchParentsAdmin);
+  const childrenOfParentFn = useServerFn(getChildrenOfParentAdmin);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await squadsFn({ data: { mentorUserId: mentor.mentor_user_id }, ...opts() });
+        const squads = ((res as any) ?? []) as Array<{
+          id: string;
+          name: string;
+          members: Array<{ id: string; name: string }>;
+        }>;
+        setExistingSquads(squads);
+        if (squads[0]) {
+          setName(squads[0].name);
+          setSelected(new Map(squads[0].members.map((m) => [m.id, m.name])));
+        }
+      } catch {
+        setExistingSquads([]);
+      } finally {
+        setLoadingSquads(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mentor.mentor_user_id]);
+
+  const handleSearchParents = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!parentQuery.trim()) return;
+    try {
+      const res = await searchParentsFn({ data: { query: parentQuery.trim() }, ...opts() });
+      setParentResults((res as any) ?? []);
+      setParentSearched(true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de la recherche du parent.");
+    }
+  };
+
+  const handleSelectParent = async (parent: ParentSearchResult) => {
+    setLoadingChildren(true);
+    try {
+      const res = await childrenOfParentFn({ data: { parentId: parent.user_id }, ...opts() });
+      setChildrenOfParent((res as any) ?? []);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors du chargement des enfants.");
+    } finally {
+      setLoadingChildren(false);
+    }
+  };
+
+  const toggleChild = (child: ChildOfParentResult) => {
+    if (!child.is_active) return;
+    setSelected((prev) => {
+      const next = new Map(prev);
+      if (next.has(child.id)) next.delete(child.id);
+      else next.set(child.id, child.name);
+      return next;
+    });
+  };
+
+  const handleSubmit = async () => {
+    if (selected.size < 6 || selected.size > 8) {
+      toast.error("Une escouade compte entre 6 et 8 enfants.");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      // Une seule escouade active par passage : si le mentor en a 2, on met à jour la
+      // première (l'aperçu ci-dessus l'annonce) — le serveur borne de toute façon à 2.
+      await upsertFn({
+        data: {
+          mentorUserId: mentor.mentor_user_id,
+          name: name.trim() || "Escouade du Samedi",
+          childProfileIds: [...selected.keys()],
+          squadId: existingSquads[0]?.id,
+        },
+        ...opts(),
+      });
+      toast.success(
+        `Escouade enregistrée pour ${mentor.display_name || mentor.email} — ${selected.size} enfants.`,
+      );
+      onSuccess();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de l'enregistrement.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white my-auto rounded-[2rem] w-full max-w-lg p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 relative flex flex-col max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display font-black text-xl text-ink flex items-center gap-2">
+            <Tent className="size-5 text-sky-600" />
+            Escouade — {mentor.display_name || mentor.email}
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors cursor-pointer"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+
+        {loadingSquads ? (
+          <p className="flex items-center gap-2 text-xs font-semibold text-ink/40 py-3">
+            <Loader2 className="size-3.5 animate-spin" /> Chargement des escouades actuelles…
+          </p>
+        ) : existingSquads.length > 0 ? (
+          <div className="mb-4 space-y-2">
+            <p className="text-[11px] font-black uppercase tracking-widest text-sky-700">
+              {existingSquads.length === 1
+                ? "Escouade actuelle — enregistrer ajustera ses membres et son nom"
+                : `${existingSquads.length} escouades actives — l'enregistrement ajuste la première`}
+            </p>
+            {existingSquads.map((s) => (
+              <div key={s.id} className="rounded-2xl border border-sky-200 bg-sky-50 px-3 py-2">
+                <p className="text-xs font-black text-sky-900">{s.name}</p>
+                <p className="text-[11px] font-semibold text-sky-700/80">
+                  {s.members.map((m) => m.name).join(", ") || "Aucun membre"}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mb-4 text-[11px] font-semibold text-ink/40">
+            Aucune escouade active — composez-en une (6 à 8 enfants).
+          </p>
+        )}
+
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
+              Nom de l'escouade
+            </label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={80}
+              className="w-full bg-surface border border-ink/10 rounded-2xl p-3 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+            />
+          </div>
+
+          <form onSubmit={handleSearchParents} className="flex gap-2">
+            <input
+              type="text"
+              value={parentQuery}
+              onChange={(e) => setParentQuery(e.target.value)}
+              placeholder="Rechercher un parent (email, tél, nom) pour ajouter ses enfants…"
+              className="flex-1 min-w-0 bg-surface border border-ink/10 rounded-2xl p-3 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+            />
+            <button
+              type="submit"
+              disabled={!parentQuery.trim()}
+              className="px-4 py-3 bg-ink hover:bg-ink/90 text-white rounded-2xl font-bold flex items-center transition-all cursor-pointer disabled:opacity-50"
+            >
+              {parentQuery.trim() ? <Search className="size-4" /> : <Search className="size-4" />}
+            </button>
+          </form>
+
+          {parentSearched && parentResults.length === 0 && (
+            <p className="text-sm font-semibold text-ink/50 text-center">
+              Aucun compte trouvé pour cette recherche.
+            </p>
+          )}
+          {parentResults.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {parentResults.map((p) => (
+                <button
+                  key={p.user_id}
+                  type="button"
+                  onClick={() => void handleSelectParent(p)}
+                  className="rounded-xl border border-ink/10 bg-white px-3 py-1.5 text-xs font-bold text-ink hover:bg-surface transition-all cursor-pointer"
+                >
+                  {p.display_name || p.email}{" "}
+                  <span className="text-ink/40">({p.child_count} enf.)</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {loadingChildren && (
+            <p className="flex items-center gap-2 text-xs font-semibold text-ink/40">
+              <Loader2 className="size-3.5 animate-spin" /> Chargement des enfants…
+            </p>
+          )}
+          {childrenOfParent.length > 0 && (
+            <div className="space-y-1.5">
+              {childrenOfParent.map((child) => {
+                const checked = selected.has(child.id);
+                return (
+                  <label
+                    key={child.id}
+                    className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors ${
+                      !child.is_active
+                        ? "cursor-not-allowed opacity-50"
+                        : checked
+                          ? "cursor-pointer bg-sky-100 font-bold text-ink"
+                          : "cursor-pointer bg-surface hover:bg-sky-50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={!child.is_active}
+                      onChange={() => toggleChild(child)}
+                      className="size-4 accent-sky-600"
+                    />
+                    <span className="min-w-0 flex-1 truncate font-bold">
+                      {child.name}
+                      {child.age != null ? (
+                        <span className="text-ink/40 font-medium"> ({child.age} ans)</span>
+                      ) : null}
+                    </span>
+                    {child.current_mentor_email && (
+                      <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-700">
+                        Suivi 1-on-1 : {child.current_mentor_email}
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-ink/10 bg-white pt-3">
+            <span
+              className={`text-xs font-black ${
+                selected.size >= 6 && selected.size <= 8 ? "text-emerald-600" : "text-ink/50"
+              }`}
+            >
+              {selected.size} / 6-8 sélectionné{selected.size > 1 ? "s" : ""}
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2.5 bg-surface hover:bg-ink/5 text-ink rounded-2xl text-sm font-bold transition-colors cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSubmit()}
+                disabled={isSubmitting || selected.size < 6 || selected.size > 8}
+                className="px-4 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl text-sm font-bold transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Tent className="size-4" />
+                )}
+                Enregistrer l'escouade
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+

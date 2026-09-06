@@ -18,6 +18,7 @@
 import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { requireRateLimit } from "@/lib/rate-limit.middleware";
 import {
   ATELIER_KEYS,
@@ -42,6 +43,88 @@ const UpsertSquadInput = z.object({
   name: z.string().min(1).max(80).default("Escouade du Samedi"),
   childProfileIds: z.array(z.string().uuid()).min(1).max(16),
 });
+
+// Constitution d'escouade PAR L'ADMIN (deux-modèles) : réservée aux mentors de
+// soutien, 6 à 8 enfants (min = quorum de séance, max = capacité), max 2 escouades.
+// Le mentor consulte la sienne dans /mentor (SaturdayClubSquadView) et déclare les
+// séances — il ne choisit jamais ses membres lui-même.
+const UpsertSquadAdminInput = z.object({
+  mentorUserId: z.string().uuid(),
+  name: z.string().min(1).max(80).default("Escouade du Samedi"),
+  childProfileIds: z.array(z.string().uuid()).min(6, "Une escouade compte au moins 6 enfants.").max(8, "Une escouade est limitée à 8 enfants."),
+  squadId: z.string().uuid().optional(),
+});
+
+export const upsertSquadAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => UpsertSquadAdminInput.parse(input))
+  .handler(async ({ data }): Promise<{ squadId: string; memberCount: number }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as any;
+    const category = await loadMentorCategory(db, data.mentorUserId);
+    if (category !== "support") {
+      throw new Error(
+        "Les escouades sont réservées aux mentors de Soutien (Club du Samedi) — ce compte est un mentor Pro (Superviseur Clinique).",
+      );
+    }
+    const quota = MENTOR_CATEGORY_QUOTAS.support;
+    if (data.childProfileIds.length > quota.maxChildrenPerSquad) {
+      throw new Error(
+        `Une escouade est limitée à ${quota.maxChildrenPerSquad} enfants (reçu : ${data.childProfileIds.length}).`,
+      );
+    }
+
+    // Vérifier l'existence des enfants (FK échouerait sinon avec un message brut).
+    const { data: children } = await db
+      .from("child_profiles")
+      .select("id")
+      .in("id", data.childProfileIds);
+    if ((children ?? []).length !== new Set(data.childProfileIds).size) {
+      throw new Error("Un ou plusieurs enfants sont introuvables.");
+    }
+
+    // Mise à jour d'une escouade existante, sinon création — jamais au-delà de 2
+    // escouades actives (MENTOR_CATEGORY_QUOTAS.support.maxSquads).
+    const { data: activeSquads } = await db
+      .from("mentor_squads")
+      .select("id")
+      .eq("mentor_user_id", data.mentorUserId)
+      .eq("status", "active");
+    const existingSquadId = data.squadId;
+    const activeSquadIds = new Set((activeSquads ?? []).map((s: any) => s.id as string));
+    let squadId: string;
+    if (existingSquadId) {
+      if (!activeSquadIds.has(existingSquadId)) {
+        throw new Error("Escouade introuvable pour ce mentor.");
+      }
+      squadId = existingSquadId;
+      await db.from("mentor_squads").update({ name: data.name }).eq("id", squadId);
+    } else {
+      if ((activeSquads ?? []).length >= quota.maxSquads) {
+        throw new Error(
+          `Ce mentor anime déjà ${quota.maxSquads} escouades (le maximum) — ajustez une escouade existante.`,
+        );
+      }
+      const { data: created, error } = await db
+        .from("mentor_squads")
+        .insert({ mentor_user_id: data.mentorUserId, name: data.name })
+        .select("id")
+        .single();
+      if (error) throw new Error(`Création de l'escouade impossible : ${error.message}`);
+      squadId = created.id;
+    }
+
+    // Remplacement complet des membres actifs (idempotent, comme upsertMySquad).
+    await db.from("mentor_squad_members").delete().eq("squad_id", squadId).is("removed_at", null);
+    await db.from("mentor_squad_members").insert(
+      data.childProfileIds.map((childProfileId) => ({
+        squad_id: squadId,
+        child_profile_id: childProfileId,
+      })),
+    );
+
+    return { squadId, memberCount: data.childProfileIds.length };
+  });
 
 const MemberAttendance = z.object({
   childProfileId: z.string().uuid(),
@@ -363,6 +446,48 @@ export const getMySquad = createServerFn({ method: "GET" })
     if (!existing) return null;
     return buildSquadView(db, existing.id, userId);
   });
+
+// Escouades actives d'un mentor — vue admin (annuaire Soutien + modale escouade).
+export const listSquadsAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => z.object({ mentorUserId: z.string().uuid() }).parse(input))
+  .handler(
+    async ({
+      data,
+    }): Promise<
+      Array<{ id: string; name: string; members: Array<{ id: string; name: string }> }>
+    > => {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const db = supabaseAdmin as any;
+      const { data: squads } = await db
+        .from("mentor_squads")
+        .select("id, name")
+        .eq("mentor_user_id", data.mentorUserId)
+        .eq("status", "active");
+      const squadIds = (squads ?? []).map((s: any) => s.id as string);
+      if (squadIds.length === 0) return [];
+      const { data: members } = await db
+        .from("mentor_squad_members")
+        .select("squad_id, child_profile_id")
+        .in("squad_id", squadIds)
+        .is("removed_at", null);
+      const childIds = [...new Set((members ?? []).map((m: any) => m.child_profile_id as string))];
+      const { data: childRows } = childIds.length
+        ? await db.from("child_profiles").select("id, name").in("id", childIds)
+        : { data: [] };
+      const nameById = new Map((childRows ?? []).map((c: any) => [c.id, c.name as string]));
+      return (squads ?? []).map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        members: (members ?? [])
+          .filter((m: any) => m.squad_id === s.id)
+          .map((m: any) => ({
+            id: m.child_profile_id as string,
+            name: nameById.get(m.child_profile_id) ?? "Enfant",
+          })),
+      }));
+    },
+  );
 
 // ── Séances ─────────────────────────────────────────────────────────────────
 
