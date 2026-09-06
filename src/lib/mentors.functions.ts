@@ -982,7 +982,10 @@ export const listCampaignCohortAdmin = createServerFn({ method: "GET" })
       supabaseAdmin
         .from("mentors")
         .select("child_profile_id, mentor_user_id")
-        .in("child_profile_id", cohortChildIds),
+        .in("child_profile_id", cohortChildIds)
+        // Liens ACTIFS seulement : un enfant retiré de son mentor redevient
+        // assignable (sinon il restait marqué « déjà suivi » pour toujours).
+        .is("removed_at", null),
     ]);
     if (childrenRes.error) throw new Error(childrenRes.error.message);
 
@@ -1069,7 +1072,10 @@ export const assignMentorToCampaignAdmin = createServerFn({ method: "POST" })
     const { data: existingSup } = await (supabaseAdmin as any)
       .from("mentors")
       .select("child_profile_id")
-      .in("child_profile_id", cohortChildIds);
+      .in("child_profile_id", cohortChildIds)
+      // Même règle que la cohorte affichée : seuls les liens ACTIFS bloquent
+      // (un enfant retiré de son mentor peut être re-confié).
+      .is("removed_at", null);
     const alreadyMentored = new Set(
       (existingSup ?? []).map((s: any) => s.child_profile_id as string),
     );
@@ -1571,6 +1577,60 @@ export const updateMentorStatusAdmin = createServerFn({ method: "POST" })
     }
 
     return { success: true, status: data.status };
+  });
+
+// ── Changement de modèle d'un mentor (deux-modèles) ─────────────────────────
+// L'admin bascule un mentor entre Pro (Clinique, 1-on-1 ≤ 5) et Soutien (Club,
+// escouades 6-8). Sans cette porte, aucun mentor n'aurait jamais pu devenir
+// « support » : tous les profils historiques naissent 'pro' par défaut, et le
+// bouton « Escouade » n'apparaît que sur les cartes Soutien.
+const UpdateMentorCategoryInput = z.object({
+  mentorUserId: z.string().uuid(),
+  category: z.enum(["pro", "support"]),
+});
+
+export const updateMentorCategoryAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => UpdateMentorCategoryInput.parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Garde-fou de cohérence : un mentor de Soutien n'a pas de suivi 1-on-1.
+    // S'il a encore des enfants assignés en 1-on-1, on refuse — l'admin doit les
+    // retirer d'abord (sinon ses liens resteraient actifs malgré le modèle club).
+    if (data.category === "support") {
+      const { count } = await (supabaseAdmin as any)
+        .from("mentors")
+        .select("id", { count: "exact", head: true })
+        .eq("mentor_user_id", data.mentorUserId)
+        .is("removed_at", null);
+      if ((count ?? 0) > 0) {
+        throw new Error(
+          `Ce mentor suit encore ${count} enfant(s) en 1-on-1 — retirez-les de sa carte avant de le basculer en mentor de Soutien.`,
+        );
+      }
+    }
+
+    // Upsert (même logique que updateMentorStatusAdmin).
+    const { data: existing } = await (supabaseAdmin as any)
+      .from("mentor_profiles")
+      .select("mentor_user_id")
+      .eq("mentor_user_id", data.mentorUserId)
+      .maybeSingle();
+    if (existing) {
+      const { error } = await (supabaseAdmin as any)
+        .from("mentor_profiles")
+        .update({ category: data.category })
+        .eq("mentor_user_id", data.mentorUserId);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await (supabaseAdmin as any)
+        .from("mentor_profiles")
+        .insert({ mentor_user_id: data.mentorUserId, status: "active", category: data.category });
+      if (error) throw new Error(error.message);
+    }
+
+    return { success: true, category: data.category };
   });
 
 export const removeMentor = createServerFn({ method: "POST" })

@@ -6,6 +6,7 @@ import {
   assignMentorToCampaignAdmin,
   removeMentor,
   updateMentorStatusAdmin,
+  updateMentorCategoryAdmin,
   searchParentsAdmin,
   getChildrenOfParentAdmin,
   searchMentorsAdmin,
@@ -413,7 +414,43 @@ export function AdminMentorsTab({
   // est structurel : un mentor banni ne reçoit plus d'assignation ni ne peut déclarer
   // de séance (vérifié dans insertMentorAssignments et declareSessionMentor).
   const updateStatusFn = useServerFn(updateMentorStatusAdmin);
+  const updateCategoryFn = useServerFn(updateMentorCategoryAdmin);
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
+
+  // Bascule du modèle d'un mentor (deux-modèles) : Pro (1-on-1) ↔ Soutien (escouades).
+  const handleUpdateCategory = async (mentorUserId: string, category: MentorCategory) => {
+    const label = category === "support" ? "Mentor de Soutien (Club du Samedi)" : "Mentor Pro (Clinique)";
+    if (
+      !(await confirmDialog({
+        title: `Basculer en ${label} ?`,
+        description:
+          category === "support"
+            ? "Ce mentor ne pourra plus recevoir d'enfants en 1-on-1 : il animera des escouades de 6 à 8 enfants (Clubs du Samedi). Ses enfants actifs devront être retirés au préalable."
+            : "Ce mentor redevient Superviseur Clinique : suivi 1-on-1, quota ≤ 5 enfants, 15 000 F/séance. Ses escouades ne sont plus modifiables depuis ce cadre.",
+        confirmLabel: "Basculer",
+      }))
+    )
+      return;
+    setUpdatingStatusId(mentorUserId);
+    // Optimistic UI : la carte change de cadre immédiatement.
+    const previousGroups = groups;
+    setGroups((prev) =>
+      prev.map((g) => (g.mentor_user_id === mentorUserId ? { ...g, category } : g)),
+    );
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+    try {
+      await updateCategoryFn({ data: { mentorUserId, category }, ...opts });
+      toast.success(`Modèle mis à jour : ${label}.`);
+      void onDataChanged?.();
+    } catch (err) {
+      setGroups(previousGroups);
+      toast.error(err instanceof Error ? err.message : "Erreur lors du changement de modèle.");
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  };
 
   const handleUpdateStatus = async (mentorUserId: string, status: string) => {
     const label =
@@ -695,7 +732,7 @@ export function AdminMentorsTab({
                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand px-5 py-2.5 text-sm font-bold text-white hover:bg-brand/90 transition-colors cursor-pointer"
                 >
                   <UserPlus className="size-4" />
-                  <span>Assigner à une campagne</span>
+                  <span>Assigner un mentor</span>
                 </button>
               </div>
 
@@ -743,15 +780,25 @@ export function AdminMentorsTab({
                               <p className="text-sm font-bold text-ink truncate">
                                 {g.display_name || g.email}
                               </p>
-                              <span
-                                className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                              <select
+                                value={g.category}
+                                disabled={updatingStatusId === g.mentor_user_id}
+                                onChange={(e) =>
+                                  void handleUpdateCategory(
+                                    g.mentor_user_id,
+                                    e.target.value as MentorCategory,
+                                  )
+                                }
+                                title="Changer le modèle du mentor : Pro (1-on-1 ≤ 5 enfants) ou Soutien (escouades 6-8)"
+                                className={`cursor-pointer rounded-full border-0 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider outline-none ${
                                   g.category === "support"
                                     ? "bg-sky-100 text-sky-800"
                                     : "bg-purple-100 text-purple-800"
                                 }`}
                               >
-                                {g.category === "support" ? "Soutien (Club)" : "Pro (Clinique)"}
-                              </span>
+                                <option value="pro">Pro (Clinique)</option>
+                                <option value="support">Soutien (Club)</option>
+                              </select>
                               {g.display_name && (
                                 <span className="text-xs font-semibold text-ink/50 truncate">
                                   ({g.email})
