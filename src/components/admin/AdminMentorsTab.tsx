@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { Fragment, useEffect, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import {
@@ -44,12 +44,67 @@ import {
   KeyRound,
   HeartHandshake,
   Phone,
+  Stethoscope,
+  Tent,
 } from "lucide-react";
 import { toast } from "sonner";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { AdminSafeguardingAudits } from "./AdminSafeguardingAudits";
 import { AdminSafetyReports } from "./AdminSafetyReports";
 import { getSafeguardingPendingCountAdmin } from "@/lib/safeguarding.functions";
+
+// Bandeau qui sépare l'annuaire en deux cadres : Pro (Clinique) d'abord, Soutien (Club) ensuite.
+function MentorSectionHeader({
+  category,
+  mentors,
+}: {
+  category: "pro" | "support";
+  mentors: number;
+}) {
+  const isSupport = category === "support";
+  return (
+    <div
+      className={`flex items-center gap-3 rounded-2xl border-2 px-4 py-3 ${
+        isSupport ? "border-sky-300 bg-sky-50" : "border-purple-300 bg-purple-50"
+      }`}
+    >
+      <div
+        className={`grid size-9 shrink-0 place-items-center rounded-xl text-white ${
+          isSupport ? "bg-sky-500" : "bg-purple-500"
+        }`}
+      >
+        {isSupport ? <Tent className="size-4" /> : <Stethoscope className="size-4" />}
+      </div>
+      <div className="min-w-0">
+        <p
+          className={`font-display text-sm font-black uppercase tracking-wider ${
+            isSupport ? "text-sky-900" : "text-purple-900"
+          }`}
+        >
+          {isSupport
+            ? "Mentors de Soutien — Clubs du Samedi"
+            : "Mentors Pro — Superviseurs Cliniques"}
+        </p>
+        <p
+          className={`text-[11px] font-semibold ${
+            isSupport ? "text-sky-700/80" : "text-purple-700/80"
+          }`}
+        >
+          {isSupport
+            ? "Escouades de 6 à 8 enfants · 10 000 F / mois / enfant · 70 % mentor"
+            : "Remédiation 1-on-1 · ≤ 5 enfants · 15 000 F / séance · 70 % mentor (10 500 F)"}
+        </p>
+      </div>
+      <span
+        className={`ml-auto shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+          isSupport ? "bg-sky-100 text-sky-800" : "bg-purple-100 text-purple-800"
+        }`}
+      >
+        {mentors} mentor{mentors > 1 ? "s" : ""}
+      </span>
+    </div>
+  );
+}
 
 export interface AdminMentorsTabProps {
   onDataChanged?: () => void | Promise<void>;
@@ -654,10 +709,24 @@ export function AdminMentorsTab({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {groups.map((g) => (
+                  {[...groups]
+                    .sort(
+                      (a, b) =>
+                        (a.category === "support" ? 1 : 0) - (b.category === "support" ? 1 : 0),
+                    )
+                    .map((g, i, arr) => (
+                      <Fragment key={g.mentor_user_id}>
+                        {(i === 0 || arr[i - 1].category !== g.category) && (
+                          <MentorSectionHeader
+                            category={g.category}
+                            mentors={arr.filter((m) => m.category === g.category).length}
+                          />
+                        )}
                     <div
                       key={g.mentor_user_id}
-                      className="rounded-3xl border border-ink/10 bg-white p-5 sm:p-6 shadow-sm"
+                      className={`rounded-3xl border border-ink/10 border-t-4 bg-white p-5 sm:p-6 shadow-sm ${
+                        g.category === "support" ? "border-t-sky-400" : "border-t-purple-500"
+                      }`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                         <div className="flex items-center gap-3 min-w-0">
@@ -906,6 +975,7 @@ export function AdminMentorsTab({
                         ))}
                       </ul>
                     </div>
+                      </Fragment>
                   ))}
                 </div>
               )}
