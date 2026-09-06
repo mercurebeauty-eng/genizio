@@ -1824,6 +1824,8 @@ const GenerateCodesInput = z.object({
   count: z.number().int().min(1).max(50).default(5),
   /** Nombre de jours de validité (null = jamais expiré). */
   validDays: z.number().int().min(1).max(365).optional(),
+  /** Modèle de mentor : le code active le profil dans cette catégorie. */
+  category: z.enum(["pro", "support"]).default("pro"),
 });
 
 export interface MentorActivationCodeRow {
@@ -1833,17 +1835,25 @@ export interface MentorActivationCodeRow {
   used_by_email: string | null;
   used_at: string | null;
   created_at: string;
+  category: MentorCategory;
 }
 
 // Alphabet sans caractères ambigus (ni 0/O, 1/I/L) — code tapé à la main.
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-async function generateMentorCode(): Promise<string> {
+// Le préfixe porte le modèle : MNT-PRO-* active un Superviseur Clinique,
+// MNT-CLUB-* un mentor de Soutien (la RPC recopie la catégorie vers le profil).
+const CODE_PREFIXES: Record<MentorCategory, string> = {
+  pro: "MNT-PRO-",
+  support: "MNT-CLUB-",
+};
+
+async function generateMentorCode(category: MentorCategory): Promise<string> {
   // Import dynamique (pattern du repo pour les modules serveur uniquement).
   const { randomBytes } = await import("node:crypto");
-  const bytes = randomBytes(8);
-  let code = "MNT-";
-  for (let i = 0; i < 8; i++) code += CODE_ALPHABET[bytes[i] % CODE_ALPHABET.length];
+  const bytes = randomBytes(6);
+  let code = CODE_PREFIXES[category];
+  for (let i = 0; i < 6; i++) code += CODE_ALPHABET[bytes[i] % CODE_ALPHABET.length];
   return code;
 }
 
@@ -1860,7 +1870,7 @@ export const generateMentorActivationCodesAdmin = createServerFn({ method: "POST
     // une fois avant d'abandonner.
     for (let attempt = 0; attempt < 3; attempt++) {
       const codes = await Promise.all(
-        Array.from({ length: data.count }, () => generateMentorCode()),
+        Array.from({ length: data.count }, () => generateMentorCode(data.category)),
       );
       const { data: inserted, error } = await (supabaseAdmin as any)
         .from("mentor_activation_codes")
@@ -1869,6 +1879,7 @@ export const generateMentorActivationCodesAdmin = createServerFn({ method: "POST
             code,
             created_by: (context as any).claims?.sub ?? null,
             valid_until: validUntil,
+            category: data.category,
           })),
         )
         .select("code, valid_until, created_at");
@@ -1883,15 +1894,25 @@ export const listMentorActivationCodesAdmin = createServerFn({ method: "GET" })
   .handler(async (): Promise<{ codes: MentorActivationCodeRow[]; total: number }> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [{ count }, { data: rows, error }] = await Promise.all([
-      supabaseAdmin.from("mentor_activation_codes").select("id", { count: "exact", head: true }),
-      (supabaseAdmin as any)
+    let { count } = await supabaseAdmin
+      .from("mentor_activation_codes")
+      .select("id", { count: "exact", head: true });
+    const { data: rows0, error } = await (supabaseAdmin as any)
+      .from("mentor_activation_codes")
+      .select("id, code, valid_until, used_by, used_at, created_at, category")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    let rows = rows0 as any[] | null;
+    if (error) {
+      // Tolérant si la colonne category n'existe pas encore (migration pas appliquée).
+      const retry = await (supabaseAdmin as any)
         .from("mentor_activation_codes")
         .select("id, code, valid_until, used_by, used_at, created_at")
         .order("created_at", { ascending: false })
-        .limit(50),
-    ]);
-    if (error) throw new Error(error.message);
+        .limit(50);
+      if (retry.error) throw new Error(retry.error.message);
+      rows = retry.data;
+    }
 
     // Email du compte activé via parent_profiles (Vague 1) — une requête groupée.
     const usedByUserIds = [
@@ -1918,6 +1939,7 @@ export const listMentorActivationCodesAdmin = createServerFn({ method: "GET" })
         used_by_email: r.used_by ? (emailById.get(r.used_by) ?? "Inconnu") : null,
         used_at: r.used_at ?? null,
         created_at: r.created_at,
+        category: resolveMentorCategory(r.category),
       })),
       total: count ?? 0,
     };

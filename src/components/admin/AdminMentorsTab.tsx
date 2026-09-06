@@ -22,6 +22,7 @@ import {
   type MentorSearchResult,
   type MentorActivationCodeRow,
 } from "@/lib/mentors.functions";
+import type { MentorCategory } from "@/lib/mentor-safeguards";
 import { formatXof } from "@/lib/pricing";
 import { AdminPagination } from "./AdminPagination";
 import {
@@ -112,6 +113,9 @@ export function AdminMentorsTab({
   const [codes, setCodes] = useState<MentorActivationCodeRow[]>([]);
   const [codesTotal, setCodesTotal] = useState(0);
   const [generatingCodes, setGeneratingCodes] = useState(false);
+  // Deux modèles : chaque code porte la catégorie qu'il activera chez le mentor.
+  const [codeCategory, setCodeCategory] = useState<MentorCategory>("pro");
+  const [codeValidDays, setCodeValidDays] = useState<string>("");
 
   const loadCodes = async () => {
     const opts = session?.access_token
@@ -130,8 +134,17 @@ export function AdminMentorsTab({
       : {};
     setGeneratingCodes(true);
     try {
-      const res = await generateCodesFn({ data: { count }, ...opts });
-      toast.success(`${res.codes.length} code(s) généré(s) — transmettez-les aux futurs mentors.`);
+      const res = await generateCodesFn({
+        data: {
+          count,
+          category: codeCategory,
+          validDays: codeValidDays ? Number(codeValidDays) : undefined,
+        },
+        ...opts,
+      });
+      toast.success(
+        `${res.codes.length} code(s) ${codeCategory === "pro" ? "PRO" : "CLUB"} généré(s) — transmettez-les aux futurs mentors.`,
+      );
       await loadCodes();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur lors de la génération des codes.");
@@ -922,18 +935,47 @@ export function AdminMentorsTab({
                   assignation admin.
                 </p>
               </div>
-              <button
-                onClick={() => void handleGenerateCodes(5)}
-                disabled={generatingCodes}
-                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-brand hover:bg-brand/90 text-white px-4 py-2 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
-              >
-                {generatingCodes ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <KeyRound className="size-3.5" />
-                )}
-                Générer 5 codes
-              </button>
+              <div className="flex flex-col sm:flex-row sm:items-end gap-3 shrink-0">
+                <label className="text-xs">
+                  <span className="block font-black uppercase tracking-wider text-ink/60 mb-1">
+                    Modèle
+                  </span>
+                  <select
+                    value={codeCategory}
+                    onChange={(e) => setCodeCategory(e.target.value as MentorCategory)}
+                    className="rounded-xl border-2 border-ink/15 bg-white px-3 py-2 text-xs font-bold text-ink focus:border-brand focus:outline-none"
+                  >
+                    <option value="pro">Pro (Clinique) — MNT-PRO-…</option>
+                    <option value="support">Soutien (Club) — MNT-CLUB-…</option>
+                  </select>
+                </label>
+                <label className="text-xs">
+                  <span className="block font-black uppercase tracking-wider text-ink/60 mb-1">
+                    Validité (jours)
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={codeValidDays}
+                    onChange={(e) => setCodeValidDays(e.target.value)}
+                    placeholder="Jamais"
+                    className="w-24 rounded-xl border-2 border-ink/15 bg-white px-3 py-2 text-xs font-bold text-ink placeholder:text-ink/30 focus:border-brand focus:outline-none"
+                  />
+                </label>
+                <button
+                  onClick={() => void handleGenerateCodes(5)}
+                  disabled={generatingCodes}
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-brand hover:bg-brand/90 text-white px-4 py-2 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {generatingCodes ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <KeyRound className="size-3.5" />
+                  )}
+                  Générer 5 codes
+                </button>
+              </div>
             </div>
 
             {codes.length === 0 ? (
@@ -943,10 +985,11 @@ export function AdminMentorsTab({
             ) : (
               <>
                 <div className="overflow-x-auto rounded-2xl border border-ink/10">
-                  <table className="w-full min-w-[480px] text-left text-sm">
+                  <table className="w-full min-w-[560px] text-left text-sm">
                     <thead className="border-b border-ink/10 bg-surface/60 text-[11px] font-black uppercase tracking-wider text-ink/60">
                       <tr>
                         <th className="px-4 py-2.5">Code</th>
+                        <th className="px-4 py-2.5">Modèle</th>
                         <th className="px-4 py-2.5">Créé le</th>
                         <th className="px-4 py-2.5">Valable jusqu'au</th>
                         <th className="px-4 py-2.5">Statut</th>
@@ -960,6 +1003,17 @@ export function AdminMentorsTab({
                           <tr key={c.id}>
                             <td className="px-4 py-2.5 font-mono text-xs font-bold text-ink">
                               {c.code}
+                            </td>
+                            <td className="px-4 py-2.5">
+                              {c.category === "support" ? (
+                                <span className="rounded-full bg-sky-100 text-sky-800 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+                                  Club
+                                </span>
+                              ) : (
+                                <span className="rounded-full bg-purple-100 text-purple-800 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+                                  Pro
+                                </span>
+                              )}
                             </td>
                             <td className="px-4 py-2.5 text-xs text-ink/60">
                               {new Date(c.created_at).toLocaleDateString("fr-FR")}
