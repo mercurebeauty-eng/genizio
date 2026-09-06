@@ -28,10 +28,23 @@ import {
   Trash2,
   Check,
   ChevronDown,
+  Sparkles,
+  ShieldCheck,
+  ToggleLeft,
+  ToggleRight,
+  Sliders,
 } from "lucide-react";
 import type { NayaTelemetryResponse } from "@/lib/naya-telemetry";
 import { isDeepSeekPeakHour } from "@/lib/naya-telemetry";
-import type { AiProviderStatus, ProgressionHealthResponse } from "@/lib/admin-os.functions";
+import type {
+  AiProviderStatus,
+  ProgressionHealthResponse,
+  NayaModelRoutingSettings,
+  ChallengeModelId,
+  getChallengeModelOptions,
+  refreshAiModelPricingAdmin,
+} from "@/lib/admin-os.functions";
+import { CHALLENGE_MODEL_OPTIONS } from "@/lib/admin-os.functions";
 import {
   decideLoupSuggestionsAdmin,
   LOUP_DECISION_LABELS,
@@ -50,6 +63,10 @@ import {
   upsertCountryMaterialAdmin,
   type CountryMaterialRow,
 } from "@/lib/country-materials.functions";
+import {
+  getSubstitutionVerifyAdmin,
+  setSubstitutionVerifyAdmin,
+} from "@/lib/substitution.functions";
 
 export interface AdminNayaTabProps {
   telemetry: NayaTelemetryResponse;
@@ -62,22 +79,27 @@ export interface AdminNayaTabProps {
   /** Clés `kind|domaine|règle` en cours de décision (spinner par carte). */
   decidingRuleKeys?: string[];
   onDataChanged?: () => void | Promise<void>;
+  nayaRoutingSettings?: NayaModelRoutingSettings | null;
+  onUpdateNayaRouting?: (newSettings: {
+    challengeModel: ChallengeModelId;
+    fallbackEnabled?: boolean;
+  }) => Promise<void>;
 }
 
-// Couleur par modèle — 3 postes depuis le passage à DeepSeek (2026-07-21) :
-// sky = deepseek-v4-flash (texte courant), amber = deepseek-v4-pro (raisonnement
-// NAYA, mode réflexion activé), purple = Claude Sonnet 5 (vision uniquement, seul
-// cas encore Anthropic). Les appellations affichent les noms de modèles API réels.
+// Couleur par modèle — support DeepSeek, GLM, Qwen et Claude Sonnet (vision).
+// Les appellations affichent les noms de modèles API réels.
 function modelDotClass(modelLabel: string): string {
   if (modelLabel.includes("Sonnet")) return "bg-purple-600";
   if (modelLabel.includes("V4 Pro")) return "bg-amber-500";
   if (modelLabel.includes("GLM")) return "bg-emerald-600";
+  if (modelLabel.includes("Qwen")) return "bg-indigo-600";
   return "bg-sky-500";
 }
 function modelBadgeClass(modelLabel: string): string {
   if (modelLabel.includes("Sonnet")) return "bg-purple-100 text-purple-700";
   if (modelLabel.includes("V4 Pro")) return "bg-amber-100 text-amber-700";
   if (modelLabel.includes("GLM")) return "bg-emerald-100 text-emerald-700";
+  if (modelLabel.includes("Qwen")) return "bg-indigo-100 text-indigo-700";
   return "bg-sky-100 text-sky-700";
 }
 
@@ -89,6 +111,8 @@ export function AdminNayaTab({
   onRefresh,
   constitution,
   onDataChanged,
+  nayaRoutingSettings,
+  onUpdateNayaRouting,
 }: AdminNayaTabProps) {
   const [localConstitution, setLocalConstitution] =
     useState<ConstitutionSuggestionsResponse | null>(constitution || null);
@@ -96,6 +120,68 @@ export function AdminNayaTab({
     setLocalConstitution(constitution || null);
   }, [constitution]);
   const [decidingKeys, setDecidingKeys] = useState<string[]>([]);
+
+  const [isUpdatingRouting, setIsUpdatingRouting] = useState(false);
+  const [isRefreshingPricing, setIsRefreshingPricing] = useState(false);
+  const refreshPricingFn = useServerFn(refreshAiModelPricingAdmin);
+
+  const modelOptions = getChallengeModelOptions(telemetry?.livePricing);
+
+  const handleRefreshOpenRouterPricing = async () => {
+    if (isRefreshingPricing) return;
+    try {
+      setIsRefreshingPricing(true);
+      const res = await refreshPricingFn();
+      toast.success(
+        res.isLive
+          ? "Tarifs OpenRouter synchronisés en direct depuis l'API officielle !"
+          : "Tarifs mis à jour (mode de repli sécurisé).",
+      );
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (err: any) {
+      console.error("Erreur actualisation tarifs OpenRouter:", err);
+      toast.error(err?.message || "Erreur lors de l'actualisation des tarifs OpenRouter.");
+    } finally {
+      setIsRefreshingPricing(false);
+    }
+  };
+
+  const currentChallengeModel: ChallengeModelId =
+    nayaRoutingSettings?.challengeModel || "deepseek-v4-flash";
+  const fallbackEnabled: boolean =
+    nayaRoutingSettings?.fallbackEnabled !== false;
+
+  const handleSelectModel = async (modelId: ChallengeModelId) => {
+    if (modelId === currentChallengeModel || isUpdatingRouting || !onUpdateNayaRouting) return;
+    try {
+      setIsUpdatingRouting(true);
+      await onUpdateNayaRouting({
+        challengeModel: modelId,
+        fallbackEnabled,
+      });
+    } catch {
+      // error handled in caller toast
+    } finally {
+      setIsUpdatingRouting(false);
+    }
+  };
+
+  const handleToggleFallback = async () => {
+    if (isUpdatingRouting || !onUpdateNayaRouting) return;
+    try {
+      setIsUpdatingRouting(true);
+      await onUpdateNayaRouting({
+        challengeModel: currentChallengeModel,
+        fallbackEnabled: !fallbackEnabled,
+      });
+    } catch {
+      // error handled in caller toast
+    } finally {
+      setIsUpdatingRouting(false);
+    }
+  };
 
   const decideLoupFn = useServerFn(decideLoupSuggestionsAdmin);
 
@@ -201,7 +287,7 @@ export function AdminNayaTab({
             </h2>
             <p className="text-xs text-ink/60 font-medium">
               Suivi en temps réel du volume de requêtes, de la répartition des tokens et des coûts
-              estimatifs (DeepSeek vs Sonnet vision).
+              estimatifs multi-modèles (DeepSeek, GLM 5.3 Flash, Qwen 3.8 Flash et Sonnet vision).
             </p>
           </div>
         </div>
@@ -220,101 +306,398 @@ export function AdminNayaTab({
         )}
       </div>
 
-      {/* 🔀 Configuration IA active — routage par tâche + statut des clés API.
-          Ajouté au passage à DeepSeek (2026-07-21) pour que l'admin voie d'un
-          coup d'œil qui fait quoi et si les clés sont bien configurées sur cet
-          environnement, sans avoir à ouvrir .env/Vercel. */}
+      {/* 🔀 Configuration IA active — routage par tâche + statut des clés API + switch à chaud des défis. */}
       <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-5">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-brand/10 text-brand">
-            <RouteIcon className="size-5" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-brand/10 text-brand">
+              <RouteIcon className="size-5" />
+            </div>
+            <div>
+              <h3 className="font-display text-lg font-extrabold text-ink">
+                Configuration IA active & Routage des Modèles
+              </h3>
+              <p className="text-xs text-ink/60 font-medium">
+                Basculez dynamiquement le moteur des défis (DeepSeek, GLM ou Qwen), gérez la redondance et suivez la différenciation des deux tâches de GLM (élèves vs enseignants).
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-display text-lg font-extrabold text-ink">
-              Configuration IA active
-            </h3>
-            <p className="text-xs text-ink/60 font-medium">
-              Routage par type de tâche — provisoire en attendant une clé Gemini 3.6.
-            </p>
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <div className="inline-flex items-center gap-2 rounded-2xl bg-ink/5 border border-ink/10 px-3 py-1.5">
+              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-medium text-ink/70">
+                Moteur actif : <strong className="text-ink font-bold">{modelOptions.find(m => m.id === currentChallengeModel)?.label || currentChallengeModel}</strong>
+              </span>
+            </div>
+
+            {telemetry?.livePricing && (
+              <div className="inline-flex items-center gap-2 rounded-2xl bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 text-xs text-emerald-800">
+                <span className="size-2 rounded-full bg-emerald-600 animate-pulse" />
+                <span className="font-semibold">
+                  Tarifs OpenRouter :{" "}
+                  <strong className="font-extrabold text-emerald-950">
+                    {telemetry.livePricing.source === "openrouter_api"
+                      ? "API Live"
+                      : telemetry.livePricing.source === "cached"
+                      ? "Cache 15m"
+                      : "Repli standard"}
+                  </strong>
+                </span>
+                {telemetry.livePricing.fetchedAt && (
+                  <span className="text-[10px] text-emerald-700/80 font-medium">
+                    ({new Date(telemetry.livePricing.fetchedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })})
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => void handleRefreshOpenRouterPricing()}
+                  disabled={isRefreshingPricing}
+                  title="Forcer la synchronisation avec l'API publique OpenRouter"
+                  className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-600 text-white text-[11px] font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw className={`size-3 ${isRefreshingPricing ? "animate-spin" : ""}`} />
+                  {isRefreshingPricing ? "Sync..." : "Rafraîchir"}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="rounded-2xl border border-sky/20 bg-sky/5 p-4">
-            <div className="flex items-center gap-2 mb-1.5">
-              <MessageSquare className="size-4 text-sky-600" />
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-600">
-                Texte général
-              </span>
+        {/* 🎛️ Sélecteur de modèle pour les défis Naya */}
+        <div className="rounded-2xl border border-brand/20 bg-brand/[0.03] p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <Sliders className="size-4 text-brand" />
+                <h4 className="text-sm font-extrabold text-ink">
+                  Moteur Actif pour la Génération des Défis
+                </h4>
+                <span className="rounded-full bg-brand/10 text-brand px-2 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                  Switch à chaud
+                </span>
+                {telemetry?.livePricing && (
+                  <span className="rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+                    Tarifs Live
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-ink/60 mt-0.5">
+                Sélectionnez le modèle d'inférence utilisé pour générer les défis personnalisés des enfants.
+              </p>
             </div>
-            <p className="text-sm font-black text-ink">DeepSeek V4 Flash</p>
-            <p className="text-[11px] text-ink/60 mt-0.5">Défis, synthèses, recommandations</p>
-            <p className="text-[10px] font-bold text-sky-600 mt-1">
-              deepseek-v4-flash · réflexion désactivée
-            </p>
+            {nayaRoutingSettings?.updatedAt && (
+              <span className="text-[11px] text-ink/50 font-medium">
+                Mis à jour le {new Date(nayaRoutingSettings.updatedAt).toLocaleDateString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                {nayaRoutingSettings.updatedBy ? ` par ${nayaRoutingSettings.updatedBy}` : ""}
+              </span>
+            )}
           </div>
-          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Brain className="size-4 text-amber-600" />
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700">
-                Raisonnement
-              </span>
-            </div>
-            <p className="text-sm font-black text-ink">DeepSeek V4 Pro</p>
-            <p className="text-[11px] text-ink/60 mt-0.5">Diagnostic bayésien NAYA (hypothèses)</p>
-            <p className="text-[10px] font-bold text-amber-600 mt-1">
-              deepseek-v4-pro · réflexion activée (effort élevé)
-            </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {modelOptions.map((opt) => {
+              const isSelected = opt.id === currentChallengeModel;
+              const isConfigured =
+                opt.id === "deepseek-v4-flash"
+                  ? aiProviderStatus?.deepseekConfigured !== false
+                  : opt.id === "glm-5.3-flash"
+                  ? aiProviderStatus?.glmConfigured !== false
+                  : aiProviderStatus?.qwenConfigured !== false;
+
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => void handleSelectModel(opt.id)}
+                  disabled={isUpdatingRouting}
+                  className={`text-left rounded-2xl p-4 transition-all duration-200 border relative flex flex-col justify-between ${
+                    isSelected
+                      ? "border-brand bg-white shadow-md ring-2 ring-brand/20"
+                      : "border-ink/10 bg-white/70 hover:border-ink/20 hover:bg-white hover:shadow-sm"
+                  } ${isUpdatingRouting ? "opacity-75 cursor-wait" : ""}`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span
+                        className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                          opt.id === "qwen3.8-flash"
+                            ? "bg-indigo-100 text-indigo-700"
+                            : opt.id === "glm-5.3-flash"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-sky-100 text-sky-700"
+                        }`}
+                      >
+                        {opt.provider}
+                      </span>
+                      {isSelected && (
+                        <span className="flex items-center gap-1 text-[11px] font-extrabold text-brand bg-brand/10 rounded-full px-2 py-0.5">
+                          <Check className="size-3 stroke-[3]" />
+                          Actif
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="font-extrabold text-sm text-ink">{opt.label}</p>
+                    <p className="text-[11px] text-ink/60 mt-1 leading-snug">{opt.description}</p>
+                  </div>
+
+                  <div className="pt-3 mt-3 border-t border-ink/5 flex items-center justify-between text-[11px]">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-ink/80">
+                        ${opt.inputPricePerM} / ${opt.outputPricePerM}{" "}
+                        <span className="text-[9px] font-medium text-ink/40">1M tok</span>
+                      </span>
+                      {telemetry?.livePricing && (
+                        <span className="text-[9px] font-semibold text-emerald-700">
+                          Tarif live OpenRouter
+                        </span>
+                      )}
+                    </div>
+                    <span
+                      className={`inline-flex items-center gap-1 font-semibold text-[10px] ${
+                        isConfigured ? "text-emerald-700" : "text-amber-700"
+                      }`}
+                    >
+                      <span
+                        className={`size-1.5 rounded-full ${
+                          isConfigured ? "bg-emerald-500" : "bg-amber-500"
+                        }`}
+                      />
+                      {isConfigured ? "Prêt" : "Clé partagée"}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
-          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Zap className="size-4 text-emerald-600" />
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700">
-                Copilote Enseignant
-              </span>
+
+          {/* Redondance & Résilience */}
+          <div className="rounded-xl border border-ink/10 bg-white p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div
+                className={`p-2 rounded-xl ${
+                  fallbackEnabled ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                }`}
+              >
+                <ShieldCheck className="size-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-bold text-ink">
+                    Redondance & Résilience (Fallback transparent)
+                  </p>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.2 rounded-full ${
+                      fallbackEnabled ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                    }`}
+                  >
+                    {fallbackEnabled ? "Actif (Recommandé)" : "Désactivé"}
+                  </span>
+                </div>
+                <p className="text-[11px] text-ink/60 mt-0.5">
+                  {fallbackEnabled
+                    ? "Si le modèle sélectionné subit un timeout (>45s) ou une erreur 5xx, Naya bascule automatiquement et silencieusement sur DeepSeek pour ne jamais bloquer l'enfant."
+                    : "Attention : en cas de panne de l'API sélectionnée, la génération de défi retournera une erreur sans basculer."}
+                </p>
+              </div>
             </div>
-            <p className="text-sm font-black text-ink">GLM 5.3 Flash (GMICLoud)</p>
-            <p className="text-[11px] text-ink/60 mt-0.5">Fiches cours multimodales & différentiation</p>
-            <p className="text-[10px] font-bold text-emerald-700 mt-1">
-              $0.075/M in · $0.25/M out · multimodal
-            </p>
+
+            <button
+              type="button"
+              onClick={() => void handleToggleFallback()}
+              disabled={isUpdatingRouting}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                fallbackEnabled
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                  : "bg-ink/5 text-ink/70 border-ink/10 hover:bg-ink/10"
+              } ${isUpdatingRouting ? "opacity-50 cursor-wait" : ""}`}
+            >
+              {fallbackEnabled ? <ToggleRight className="size-4" /> : <ToggleLeft className="size-4" />}
+              {fallbackEnabled ? "Désactiver" : "Activer secours"}
+            </button>
           </div>
-          <div className="rounded-2xl border border-purple-500/20 bg-purple-500/5 p-4">
-            <div className="flex items-center gap-2 mb-1.5">
-              <ImageIcon className="size-4 text-purple-600" />
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-700">
-                Vision (photos)
-              </span>
-            </div>
-            <p className="text-sm font-black text-ink">Claude Sonnet 5</p>
-            <p className="text-[11px] text-ink/60 mt-0.5">Validation photo des défis physiques</p>
-            <p className="text-[10px] font-bold text-purple-700 mt-1">
-              Vision Anthropic
+        </div>
+
+        {/* Vue d'ensemble du routage des tâches — différenciation explicite de GLM (Défis vs Copilote Prof) et intégration de Qwen */}
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <p className="text-xs font-extrabold text-ink uppercase tracking-wider">
+              Matrice de spécialisation des moteurs & tâches IA
             </p>
+            <span className="text-[11px] text-ink/50 font-medium">
+              5 moteurs opérationnels · Différenciation des 2 tâches de GLM (élèves vs profs)
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+            {/* Carte 1 : Tâche Défis Naya (Moteur Actif) */}
+            <div className="rounded-2xl border border-sky/20 bg-sky/5 p-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="size-4 text-sky-600" />
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-600">
+                      Tâche 1 · Défis Naya
+                    </span>
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-brand/10 text-brand">
+                    Actif
+                  </span>
+                </div>
+                <p className="text-sm font-black text-ink">
+                  {modelOptions.find((m) => m.id === currentChallengeModel)?.label ||
+                    "DeepSeek V4 Flash"}
+                </p>
+                <p className="text-[11px] text-ink/60 mt-1 leading-snug">
+                  Défis personnalisés enfants, missions ZPA, paliers d'autonomie et fiches de mission.
+                </p>
+              </div>
+              <div className="pt-2.5 mt-2.5 border-t border-sky-100 flex items-center justify-between text-[10px]">
+                <span className="font-extrabold text-sky-700">
+                  ${(modelOptions.find((m) => m.id === currentChallengeModel)?.inputPricePerM ?? 0.0808)} / ${(modelOptions.find((m) => m.id === currentChallengeModel)?.outputPricePerM ?? 0.1616)}
+                </span>
+                <span className="font-semibold text-ink/50">
+                  {modelOptions.find((m) => m.id === currentChallengeModel)?.provider || "DeepSeek"}
+                </span>
+              </div>
+            </div>
+
+            {/* Carte 2 : GLM 5.3 Flash — Tâche 2 Copilote Enseignants (Dédié didactique) */}
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <Zap className="size-4 text-emerald-600" />
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700">
+                      Tâche 2 · Copilote Prof
+                    </span>
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                    Dédié Enseignants
+                  </span>
+                </div>
+                <p className="text-sm font-black text-ink">GLM 5.3 Flash (GMICLoud)</p>
+                <p className="text-[11px] text-ink/60 mt-1 leading-snug">
+                  Déconstruction didactique, fiches de préparation de cours multimodales, différentiation ZPA.
+                </p>
+              </div>
+              <div className="pt-2.5 mt-2.5 border-t border-emerald-100 flex items-center justify-between text-[10px]">
+                <span className="font-extrabold text-emerald-700">
+                  ${telemetry?.livePricing?.glmFlash?.inputPerM ?? 0.06} / ${telemetry?.livePricing?.glmFlash?.outputPerM ?? 0.4}
+                </span>
+                <span className="font-semibold text-emerald-800">OpenRouter (1M)</span>
+              </div>
+            </div>
+
+            {/* Carte 3 : Qwen 3.8 Flash — Tâche 1 Défis Concision & Vitesse */}
+            <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <Cpu className="size-4 text-indigo-600" />
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-700">
+                      Tâche 1 · Moteur Qwen
+                    </span>
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                    Défis Naya
+                  </span>
+                </div>
+                <p className="text-sm font-black text-ink">Qwen 3.8 Flash (Alibaba)</p>
+                <p className="text-[11px] text-ink/60 mt-1 leading-snug">
+                  Raisonnement logique, concision chirurgicale, respect JSON strict et ultra-vélocité.
+                </p>
+              </div>
+              <div className="pt-2.5 mt-2.5 border-t border-indigo-100 flex items-center justify-between text-[10px]">
+                <span className="font-extrabold text-indigo-700">
+                  ${telemetry?.livePricing?.qwenFlash?.inputPerM ?? 0.0481} / ${telemetry?.livePricing?.qwenFlash?.outputPerM ?? 0.193}
+                </span>
+                <span className="font-semibold text-indigo-800">OpenRouter (1M)</span>
+              </div>
+            </div>
+
+            {/* Carte 4 : DeepSeek V4 Pro — Raisonnement Diagnostique */}
+            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <Brain className="size-4 text-amber-600" />
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700">
+                      Raisonnement Pro
+                    </span>
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                    Diagnostic
+                  </span>
+                </div>
+                <p className="text-sm font-black text-ink">DeepSeek V4 Pro</p>
+                <p className="text-[11px] text-ink/60 mt-1 leading-snug">
+                  Diagnostic bayésien NAYA, confirmation d'hypothèses et rééquilibrage des talents Gardner.
+                </p>
+              </div>
+              <div className="pt-2.5 mt-2.5 border-t border-amber-100 flex items-center justify-between text-[10px]">
+                <span className="font-extrabold text-amber-700">
+                  ${telemetry?.livePricing?.deepseekReasoner?.inputPerM ?? 0.6876} / ${telemetry?.livePricing?.deepseekReasoner?.outputPerM ?? 1.3753}
+                </span>
+                <span className="font-semibold text-amber-800">OpenRouter (1M)</span>
+              </div>
+            </div>
+
+            {/* Carte 5 : Claude Sonnet 5 — Vision Multimodale */}
+            <div className="rounded-2xl border border-purple-500/20 bg-purple-500/5 p-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="size-4 text-purple-600" />
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-700">
+                      Vision Photos
+                    </span>
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-800">
+                    Anthropic
+                  </span>
+                </div>
+                <p className="text-sm font-black text-ink">Claude Sonnet 5</p>
+                <p className="text-[11px] text-ink/60 mt-1 leading-snug">
+                  Validation visuelle des photos de défis physiques et carnets de bord 100% hors écran.
+                </p>
+              </div>
+              <div className="pt-2.5 mt-2.5 border-t border-purple-100 flex items-center justify-between text-[10px]">
+                <span className="font-extrabold text-purple-700">
+                  ${telemetry?.livePricing?.visionSonnet?.inputPerM ?? 2.0} / ${telemetry?.livePricing?.visionSonnet?.outputPerM ?? 10.0}
+                </span>
+                <span className="font-semibold text-purple-800">OpenRouter (1M)</span>
+              </div>
+            </div>
           </div>
         </div>
 
         {aiProviderStatus && (
-          <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-ink/5">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-ink/50">
-              Clés API sur cet environnement :
-            </span>
-            {[
-              { label: "DeepSeek", ok: aiProviderStatus.deepseekConfigured },
-              { label: "GLM 5.3 Flash", ok: aiProviderStatus.glmConfigured },
-              { label: "Anthropic (vision)", ok: aiProviderStatus.anthropicConfigured },
-              { label: "Gemini (réserve)", ok: aiProviderStatus.geminiConfigured },
-            ].map(({ label, ok }) => (
-              <span
-                key={label}
-                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                  ok ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
-                }`}
-              >
-                {ok ? <CheckCircle2 className="size-3.5" /> : <XCircle className="size-3.5" />}
-                {label}
+          <div className="space-y-2 pt-3 border-t border-ink/5">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-ink/50">
+                Clés API & Fournisseurs configurés :
               </span>
-            ))}
+              {[
+                { label: "DeepSeek (Défis & Raisonnement)", ok: aiProviderStatus.deepseekConfigured },
+                { label: "GLM 5.3 Flash (Copilote Prof & Défis)", ok: aiProviderStatus.glmConfigured },
+                { label: "Qwen 3.8 Flash (Défis Naya)", ok: aiProviderStatus.qwenConfigured },
+                { label: "Claude Sonnet (Vision photos)", ok: aiProviderStatus.anthropicConfigured },
+                { label: "Gemini (Réserve multimodale)", ok: aiProviderStatus.geminiConfigured },
+              ].map(({ label, ok }) => (
+                <span
+                  key={label}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                    ok ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {ok ? <CheckCircle2 className="size-3.5" /> : <XCircle className="size-3.5" />}
+                  {label}
+                </span>
+              ))}
+            </div>
+            <p className="text-[11px] text-ink/50 italic">
+              💡 <strong>Passerelle partagée :</strong> La clé GLM (GMICLoud / api.b.ai) alimente à la fois <strong>GLM 5.3 Flash</strong> (Copilote Enseignants & option Défis) et <strong>Qwen 3.8 Flash</strong> (option Défis Naya) sans configuration supplémentaire.
+            </p>
           </div>
         )}
       </div>
@@ -420,7 +803,9 @@ export function AdminNayaTab({
               {(
                 tokenUsage.deepseekChatInputTokens +
                 tokenUsage.deepseekReasonerInputTokens +
-                tokenUsage.visionSonnetInputTokens
+                tokenUsage.visionSonnetInputTokens +
+                tokenUsage.glmFlashInputTokens +
+                tokenUsage.qwenFlashInputTokens
               ).toLocaleString("fr-FR")}
             </strong>{" "}
             | Sortie :{" "}
@@ -428,10 +813,21 @@ export function AdminNayaTab({
               {(
                 tokenUsage.deepseekChatOutputTokens +
                 tokenUsage.deepseekReasonerOutputTokens +
-                tokenUsage.visionSonnetOutputTokens
+                tokenUsage.visionSonnetOutputTokens +
+                tokenUsage.glmFlashOutputTokens +
+                tokenUsage.qwenFlashOutputTokens
               ).toLocaleString("fr-FR")}
             </strong>
           </p>
+          <div className="mt-2.5 pt-2 border-t border-ink/5 flex flex-wrap gap-x-2 gap-y-1 text-[10px] font-semibold text-ink/60">
+            <span className="text-sky-700">DeepSeek: {(tokenUsage.deepseekChatInputTokens + tokenUsage.deepseekChatOutputTokens + tokenUsage.deepseekReasonerInputTokens + tokenUsage.deepseekReasonerOutputTokens).toLocaleString("fr-FR")}</span>
+            <span>•</span>
+            <span className="text-emerald-700">GLM (Prof & Défis): {(tokenUsage.glmFlashInputTokens + tokenUsage.glmFlashOutputTokens).toLocaleString("fr-FR")}</span>
+            <span>•</span>
+            <span className="text-indigo-700">Qwen (Défis): {(tokenUsage.qwenFlashInputTokens + tokenUsage.qwenFlashOutputTokens).toLocaleString("fr-FR")}</span>
+            <span>•</span>
+            <span className="text-purple-700">Sonnet: {(tokenUsage.visionSonnetInputTokens + tokenUsage.visionSonnetOutputTokens).toLocaleString("fr-FR")}</span>
+          </div>
         </div>
 
         {/* Card 3: Estimated Cost (USD & XOF) */}
@@ -449,21 +845,27 @@ export function AdminNayaTab({
             </span>
           </div>
           <p className="text-xs text-ink/60 mt-2 font-medium">
-            Taux de conversion : <strong className="text-ink">1 USD ≈ 600 XOF</strong>
+            Moteurs : DeepSeek, GLM, Qwen & Sonnet (1 USD ≈ 600 XOF)
           </p>
+          {telemetry?.livePricing && (
+            <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200/70">
+              <span className="size-1.5 rounded-full bg-emerald-600 animate-pulse" />
+              Calculé d'après les tarifs réels OpenRouter ({telemetry.livePricing.source === "openrouter_api" ? "Direct API" : telemetry.livePricing.source === "cached" ? "Cache 15m" : "Repli standard"})
+            </div>
+          )}
           <div className="mt-2 space-y-1 text-[10px] font-semibold text-ink/55">
             <p className="flex items-center gap-1.5">
               <span
                 className={`size-2 rounded-full ${peakHourNow ? "bg-red-500" : "bg-emerald-500"}`}
               />
-              Heure actuelle (UTC) :{" "}
+              Heure DeepSeek (UTC) :{" "}
               <strong className={peakHourNow ? "text-red-600" : "text-emerald-700"}>
                 {peakHourNow ? "pointe" : "creuse"} (−50 %)
               </strong>
             </p>
             <p className="flex items-center gap-1.5">
               <span className="size-2 rounded-full bg-sky-500" />
-              Plafond (100 % en pointe) :{" "}
+              Plafond cumulé (DeepSeek pointe + GLM + Qwen + Sonnet) :{" "}
               <strong className="text-ink">
                 ${peakCeilingCostUsd.toFixed(4)}
                 <span className="font-semibold text-ink/50">
@@ -815,9 +1217,20 @@ export function AdminNayaTab({
               <tbody className="divide-y divide-ink/5">
                 {featureBreakdown.map((item) => (
                   <tr key={item.feature} className="hover:bg-surface/50 transition-colors">
-                    <td className="py-3 pr-3 font-bold text-ink flex items-center gap-2">
-                      <span className="size-2 rounded-full bg-brand inline-block" />
-                      {item.feature}
+                    <td className="py-3 pr-3 font-bold text-ink">
+                      <div className="flex items-center gap-2">
+                        <span className="size-2 rounded-full bg-brand inline-block" />
+                        <span>{item.feature}</span>
+                      </div>
+                      <span className="text-[10px] text-ink/50 font-medium block pl-4 mt-0.5">
+                        {item.feature === "Défis"
+                          ? `Tâche 1 : Défis personnalisés apprenants (Moteur actif : ${modelOptions.find((m) => m.id === currentChallengeModel)?.label || "DeepSeek"})`
+                          : item.feature === "Copilote Professeur"
+                          ? "Tâche 2 : Déconstruction didactique, fiches de cours & ZPA (GLM dédié)"
+                          : item.feature === "Hypothèses"
+                          ? "Diagnostic bayésien & dominantes de talents Gardner (DeepSeek Pro)"
+                          : "Synthèse périodique & conseils d'accompagnement parents"}
+                      </span>
                     </td>
                     <td className="py-3 pr-3">
                       <span
@@ -845,7 +1258,7 @@ export function AdminNayaTab({
           </div>
         </div>
 
-        {/* Model Breakdown Panel (DeepSeek V4 Flash / V4 Pro vs Sonnet vision) */}
+        {/* Model Breakdown Panel (DeepSeek, GLM, Qwen, Sonnet) */}
         <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-5">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-purple-500/10 text-purple-600">
@@ -853,10 +1266,10 @@ export function AdminNayaTab({
             </div>
             <div>
               <h3 className="font-display text-lg font-extrabold text-ink">
-                Distribution par Modèle
+                Distribution par Modèle & Spécialisation
               </h3>
               <p className="text-xs text-ink/60 font-medium">
-                Part relative du volume et de la facture globale.
+                Part relative du volume et de la facture globale par moteur IA et cas d'usage.
               </p>
             </div>
           </div>
@@ -873,6 +1286,17 @@ export function AdminNayaTab({
                     <span className="font-display font-extrabold text-sm text-ink">
                       {model.model}
                     </span>
+                    <span className="text-[10px] text-ink/50 font-semibold">
+                      {model.model.includes("GLM")
+                        ? `($${telemetry?.livePricing?.glmFlash?.inputPerM ?? 0.06}/$${telemetry?.livePricing?.glmFlash?.outputPerM ?? 0.4} 1M)`
+                        : model.model.includes("Qwen")
+                        ? `($${telemetry?.livePricing?.qwenFlash?.inputPerM ?? 0.0481}/$${telemetry?.livePricing?.qwenFlash?.outputPerM ?? 0.193} 1M)`
+                        : model.model.includes("V4 Pro")
+                        ? `($${telemetry?.livePricing?.deepseekReasoner?.inputPerM ?? 0.6876}/$${telemetry?.livePricing?.deepseekReasoner?.outputPerM ?? 1.3753} 1M)`
+                        : model.model.includes("Sonnet")
+                        ? `($${telemetry?.livePricing?.visionSonnet?.inputPerM ?? 2.0}/$${telemetry?.livePricing?.visionSonnet?.outputPerM ?? 10.0} 1M)`
+                        : `($${telemetry?.livePricing?.deepseekChat?.inputPerM ?? 0.0808}/$${telemetry?.livePricing?.deepseekChat?.outputPerM ?? 0.1616} 1M)`}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-ink/60">
@@ -883,6 +1307,62 @@ export function AdminNayaTab({
                     </span>
                   </div>
                 </div>
+
+                {/* Explication contextuelle du rôle et des tâches du modèle */}
+                {model.model.includes("GLM") ? (
+                  <div className="space-y-1 bg-emerald-50/80 p-2.5 rounded-xl border border-emerald-200/60 text-[11px]">
+                    <p className="font-extrabold text-emerald-900 flex items-center gap-1.5">
+                      <Zap className="size-3.5 text-emerald-600 shrink-0" />
+                      Double tâche : Copilote Enseignants & Option Défis Naya
+                    </p>
+                    <p className="text-emerald-800 leading-snug">
+                      • <strong>Tâche 2 (Copilote Enseignants)</strong> : Déconstruction didactique instantanée, fiches de cours multimodales et différentiation ZPA (usage dédié en classe).
+                    </p>
+                    <p className="text-emerald-800 leading-snug">
+                      • <strong>Tâche 1 (Défis Naya)</strong> : Moteur réactif alternatif sélectionnable d'un clic dans le switcher Admin OS.
+                    </p>
+                  </div>
+                ) : model.model.includes("Qwen") ? (
+                  <div className="bg-indigo-50/80 p-2.5 rounded-xl border border-indigo-200/60 text-[11px]">
+                    <p className="font-extrabold text-indigo-900 flex items-center gap-1.5">
+                      <Cpu className="size-3.5 text-indigo-600 shrink-0" />
+                      Tâche 1 · Défis Naya : Moteur Concision & Vélocité (Alibaba)
+                    </p>
+                    <p className="text-indigo-800 leading-snug mt-0.5">
+                      Inférence ultra-rapide, raisonnement mathématique rigoureux, respect JSON strict et tarif plancher OpenRouter (${telemetry?.livePricing?.qwenFlash?.inputPerM ?? 0.0481}/M in · ${telemetry?.livePricing?.qwenFlash?.outputPerM ?? 0.193}/M out).
+                    </p>
+                  </div>
+                ) : model.model.includes("V4 Pro") ? (
+                  <div className="bg-amber-50/80 p-2.5 rounded-xl border border-amber-200/60 text-[11px]">
+                    <p className="font-extrabold text-amber-900 flex items-center gap-1.5">
+                      <Brain className="size-3.5 text-amber-600 shrink-0" />
+                      Tâche Diagnostic Bayésien : Raisonnement & cycles d'hypothèses
+                    </p>
+                    <p className="text-amber-800 leading-snug mt-0.5">
+                      Réflexion profonde avec effort élevé pour la confirmation des dominantes de talents Gardner et l'anamnèse.
+                    </p>
+                  </div>
+                ) : model.model.includes("Sonnet") ? (
+                  <div className="bg-purple-50/80 p-2.5 rounded-xl border border-purple-200/60 text-[11px]">
+                    <p className="font-extrabold text-purple-900 flex items-center gap-1.5">
+                      <ImageIcon className="size-3.5 text-purple-600 shrink-0" />
+                      Tâche Vision Multimodale : Audit photo des défis physiques
+                    </p>
+                    <p className="text-purple-800 leading-snug mt-0.5">
+                      Validation d'authenticité et d'effort des réalisations manuelles et carnets de bord 100% hors écran.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-sky-50/80 p-2.5 rounded-xl border border-sky-200/60 text-[11px]">
+                    <p className="font-extrabold text-sky-900 flex items-center gap-1.5">
+                      <MessageSquare className="size-3.5 text-sky-600 shrink-0" />
+                      Tâche Défis Naya & Recommandations : Moteur économique historique
+                    </p>
+                    <p className="text-sky-800 leading-snug mt-0.5">
+                      Moteur par défaut pour la génération des défis quotidiens, synthèses d'activité et conseils d'accompagnement parents.
+                    </p>
+                  </div>
+                )}
 
                 {/* Progress bar */}
                 <div className="w-full bg-ink/10 h-2.5 rounded-full overflow-hidden">
@@ -1009,11 +1489,7 @@ export function AdminNayaTab({
           </div>
 
           <div className="text-[11px] text-ink/50 italic text-center">
-            * Barème DeepSeek creux/plein effectif le 2026-08-16 16:00 UTC (pointe 01:00-04:00 et
-            06:00-10:00 UTC). Estimation sur taux pondérés 70 % creux / 30 % pointe + Claude Sonnet
-            5 (vision), 1 USD = 600 XOF. Le mode réflexion (activé sur v4-pro) génère des tokens de
-            raisonnement non modélisés ici — le coût réel peut donc dépasser l'estimation (le
-            plafond 100 % pointe est affiché sur la carte « Coût Estimé »).
+            * Projection multi-modèles calculée en temps réel d'après la grille tarifaire OpenRouter : DeepSeek V4 Flash (${telemetry?.livePricing?.deepseekChat?.inputPerM ?? 0.0808}/$${telemetry?.livePricing?.deepseekChat?.outputPerM ?? 0.1616}), GLM 5.3 Flash (${telemetry?.livePricing?.glmFlash?.inputPerM ?? 0.06}/$${telemetry?.livePricing?.glmFlash?.outputPerM ?? 0.4}), Qwen 3.8 Flash (${telemetry?.livePricing?.qwenFlash?.inputPerM ?? 0.0481}/$${telemetry?.livePricing?.qwenFlash?.outputPerM ?? 0.193}) et Claude Sonnet 5 (vision photos). Taux 1 USD = 600 XOF. Le mode réflexion (activé sur v4-pro) génère des tokens de raisonnement non modélisés ici.
           </div>
         </div>
       </div>
@@ -1022,6 +1498,10 @@ export function AdminNayaTab({
           la source éditable des instructions « matériaux du pays » injectées dans
           chaque prompt de génération Naya (contextualization.ts n'est que le repli). */}
       <CountryMaterialsSection />
+
+      {/* Pilotage de la vérification back-office des manques matériels (missions de
+          substitution) — réglage en base, effectif immédiatement sans redéploiement. */}
+      <SubstitutionVerifySection />
     </div>
   );
 }
@@ -1686,6 +2166,140 @@ function CountryMaterialsSection() {
               </div>
             </div>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Vérification des manques matériels — pilotage (app_settings) ────────────────
+//
+// La vérification shadow (Naya re-vérifie en silence si des substituts réalistes
+// existaient quand une mission de substitution échoue) est pilotée ici : switch
+// ON/OFF + taux d'échantillonnage. Réglage stocké en base (app_settings) — effectif
+// immédiatement, sans redéploiement. Les variables d'environnement restent le repli
+// si la ligne de réglage disparaît.
+
+const VERIFY_RATE_CHOICES: Array<{ rate: number; label: string }> = [
+  { rate: 1, label: "100 %" },
+  { rate: 0.5, label: "50 %" },
+  { rate: 0.25, label: "25 %" },
+  { rate: 0.1, label: "10 %" },
+];
+
+function SubstitutionVerifySection() {
+  const getFn = useServerFn(getSubstitutionVerifyAdmin);
+  const setFn = useServerFn(setSubstitutionVerifyAdmin);
+
+  const [config, setConfig] = useState<{
+    enabled: boolean;
+    rate: number;
+    updatedAt: string | null;
+  } | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  React.useEffect(() => {
+    getFn()
+      .then(setConfig)
+      .catch(() => setLoadError(true));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const save = async (next: { enabled: boolean; rate: number }) => {
+    if (saving) return;
+    const previous = config;
+    setConfig((c) => (c ? { ...c, ...next } : c));
+    setSaving(true);
+    try {
+      await setFn({ data: next });
+      toast.success("Réglage appliqué — effectif immédiatement, sans redéploiement.");
+      const fresh = await getFn();
+      setConfig(fresh);
+    } catch (e) {
+      setConfig(previous);
+      toast.error(e instanceof Error ? e.message : "Échec de l'enregistrement.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+      <div className="flex items-start gap-3">
+        <div className="p-2.5 rounded-2xl bg-sky/10 text-sky">
+          <ShieldCheck className="size-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-display text-lg font-black text-ink">
+            Vérification des manques matériels
+          </h3>
+          <p className="text-xs text-ink/50 font-medium">
+            Quand une mission de substitution n'aboutit pas, Naya re-vérifie en
+            secret si des substituts réalistes existaient — pour enrichir sa
+            compréhension du terrain. Jamais montré à l'enfant ni au parent.
+          </p>
+        </div>
+        {config && (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={config.enabled}
+            disabled={saving}
+            onClick={() => void save({ enabled: !config.enabled, rate: config.rate })}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors cursor-pointer disabled:opacity-50 ${
+              config.enabled ? "bg-leaf" : "bg-ink/20"
+            }`}
+          >
+            <span
+              className={`inline-block size-4 transform rounded-full bg-white shadow transition-transform ${
+                config.enabled ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        )}
+      </div>
+
+      {loadError && (
+        <div className="mt-4 rounded-2xl bg-red-50 border border-red-100 p-4 text-xs text-red-700 font-medium flex items-center gap-2">
+          <AlertTriangle className="size-4 shrink-0" />
+          Chargement impossible — les défauts (activé, 100 %) s'appliquent en attendant.
+        </div>
+      )}
+
+      {config && config.enabled && (
+        <div className="mt-4 pt-4 border-t border-ink/5">
+          <p className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50 mb-2">
+            Fréquence de vérification
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {VERIFY_RATE_CHOICES.map(({ rate, label }) => {
+              const selected = Math.abs(config.rate - rate) < 0.001;
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  disabled={saving}
+                  onClick={() => void save({ enabled: true, rate })}
+                  className={`rounded-xl border px-4 py-2 text-[12px] font-extrabold transition-all cursor-pointer disabled:opacity-60 ${
+                    selected
+                      ? "border-sky/30 bg-sky/10 text-sky"
+                      : "border-ink/10 bg-white text-ink/60 hover:bg-surface"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-[11px] text-ink/40 font-medium">
+            {config.rate >= 1
+              ? "Chaque événement est vérifié."
+              : `Environ ${Math.round(config.rate * 100)} % des événements sont vérifiés, tirés au hasard.`}
+            {config.updatedAt
+              ? ` Dernier changement : ${new Date(config.updatedAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}.`
+              : ""}
+          </p>
         </div>
       )}
     </div>

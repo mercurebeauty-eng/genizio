@@ -329,26 +329,13 @@ async function trackMaterialSuggestions(items: { material_tags: string[]; title:
 
     for (const tag of uncovered) {
       const sample = items.find((i) => i.material_tags.includes(tag))?.title ?? null;
-      const { data: existing } = await supabaseAdmin
-        .from("material_suggestions")
-        .select("id, seen_count")
-        .eq("tag", tag)
-        .maybeSingle();
-
-      if (existing) {
-        await supabaseAdmin
-          .from("material_suggestions")
-          .update({
-            seen_count: existing.seen_count + 1,
-            last_seen_at: new Date().toISOString(),
-            sample_challenge_title: sample,
-          })
-          .eq("id", existing.id);
-      } else {
-        await supabaseAdmin
-          .from("material_suggestions")
-          .insert({ tag, sample_challenge_title: sample });
-      }
+      // Upsert atomique (audit vague B) : l'ancien select-puis-update perdait
+      // des incrémentations de seen_count sous concurrence, et le
+      // select-puis-insert pouvait lever une collision d'unicité sur tag.
+      await (supabaseAdmin as any).rpc("bump_material_suggestion", {
+        p_tag: tag,
+        p_sample_title: sample,
+      });
     }
   } catch (err) {
     console.error("trackMaterialSuggestions failed (non-fatal):", err);
@@ -401,14 +388,16 @@ async function awardCompletionXP(supabaseClient: any, childId: string) {
     const xpGain = calculateXPGain(childAge);
     const newXp = oldXp + xpGain;
 
-    await supabaseClient
-      .from("child_profiles")
-      .update({
-        xp: newXp,
-        streak: newStreak,
-        last_activity_date: now.toISOString(),
-      })
-      .eq("id", childId);
+    // XP incrémentée côté SQL (audit vague B) : deux complétions quasi
+    // simultanées lisaient le même oldXp et écrivaient toutes deux oldXp+gain
+    // (gain perdu). La logique streak (fenêtre 7/14j) reste JS — elle dépend
+    // de last_activity_date lu, et le CAS de complétion borne déjà le doublon.
+    await supabaseClient.rpc("increment_child_xp", {
+      p_child_id: childId,
+      p_gain: xpGain,
+      p_streak: newStreak,
+      p_activity_date: now.toISOString(),
+    });
 
     return {
       xpGained: xpGain,
@@ -2121,7 +2110,7 @@ export function safeJsonParse<T = any>(raw: string): T {
 // littéral, qui lui est déprécié le 2026-07-24 en faveur de deepseek-v4-flash.
 const DEEPSEEK_CHAT_MODEL = "deepseek-chat";
 
-async function callAnthropicVision(
+export async function callAnthropicVision(
   prompt: string,
   jsonMode: boolean,
   imageUrl: string | undefined,
@@ -2259,7 +2248,8 @@ async function callAnthropicVision(
       clearTimeout(timeoutId);
       attempt++;
 
-      const isFatal = err.message && err.message.includes("Fatal");
+      const isFatal =
+        (err.message && (err.message.includes("Fatal") || err.message.includes("429")));
       if (attempt >= maxRetries || isFatal) {
         throw err;
       }
@@ -2276,7 +2266,7 @@ async function callAnthropicVision(
 // DeepSeek expose une API compatible OpenAI (chat/completions) — même forme de
 // requête/réponse que la plupart des fournisseurs texte, contrairement au format
 // propriétaire d'Anthropic utilisé ci-dessus pour la vision.
-async function callDeepSeekText(
+export async function callDeepSeekText(
   prompt: string,
   jsonMode: boolean,
   maxOutputTokens: number,
@@ -2395,7 +2385,8 @@ async function callDeepSeekText(
       clearTimeout(timeoutId);
       attempt++;
 
-      const isFatal = err.message && err.message.includes("Fatal");
+      const isFatal =
+        (err.message && (err.message.includes("Fatal") || err.message.includes("429")));
       if (attempt >= maxRetries || isFatal) {
         throw err;
       }
@@ -2446,13 +2437,24 @@ export async function callClaude(
       "claude-sonnet-5",
     );
   }
-  return callDeepSeekText(
+  if (modelOverride === "deepseek-reasoner") {
+    return callDeepSeekText(
+      prompt,
+      jsonMode,
+      maxOutputTokens,
+      maxRetries,
+      "deepseek-reasoner",
+    );
+  }
+  const { dispatchChallengeTextGeneration } = await import("@/lib/naya-routing.server");
+  const res = await dispatchChallengeTextGeneration({
     prompt,
     jsonMode,
     maxOutputTokens,
     maxRetries,
-    modelOverride ?? DEEPSEEK_CHAT_MODEL,
-  );
+    callDeepSeekFn: callDeepSeekText,
+  });
+  return res.text;
 }
 
 // Gate "accès mensuel expiré" (décision 2026-08-05) : à l'expiration, la génération de
@@ -2919,15 +2921,10 @@ export const recordChallengeTimeOver = createServerFn({ method: "POST" })
       existing = viaAdmin;
     }
 
-    const { data: already } = await supabaseAdmin
-      .from("observation_events")
-      .select("id")
-      .eq("child_id", existing.child_id)
-      .eq("type", "TIME_OVER")
-      .eq("payload->>challenge_id", existing.id)
-      .limit(1);
-    if (already && already.length > 0) return { ok: true };
-
+    // Dédup par contrainte DB (audit vague B) : index unique partiel
+    // observation_events_time_over_uniq (migration 20260906140000) +
+    // ignoreDuplicates — l'ancien check-then-insert laissait passer des
+    // doublons sous concurrence (deux signalements simultanés du même dépassement).
     const { error } = await supabaseAdmin.from("observation_events").insert({
       child_id: existing.child_id,
       user_id: context.userId,
@@ -2940,7 +2937,10 @@ export const recordChallengeTimeOver = createServerFn({ method: "POST" })
         time_limit_minutes: existing.time_limit_minutes,
       },
     });
-    if (error) throw new Error(error.message);
+    // 23505 = le TIME_OVER de ce (enfant, défi) est déjà enregistré — l'index
+    // unique partiel (migration 20260906140000) remplace le check-then-insert
+    // racé ; un doublon concurrent est un succès idempotent, pas une erreur.
+    if (error && error.code !== "23505") throw new Error(error.message);
     return { ok: true };
   });
 
@@ -3251,17 +3251,6 @@ Réponds STRICTEMENT en JSON valide avec ce format :
     }
   }
 
-  if (Object.keys(deltas).length > 0) {
-    // Atomic increment (row-locked, see increment_child_talents) instead of a
-    // client-side read-modify-write, so two near-simultaneous validations for
-    // the same child can't silently drop one set of points.
-    const { error: talentsError } = await db.rpc("increment_child_talents", {
-      p_child_id: challenge.child_profiles.id,
-      p_deltas: deltas,
-    });
-    if (talentsError) throw new Error(talentsError.message);
-  }
-
   const relevant = Object.keys(deltas).length > 0;
 
   if (!relevant) {
@@ -3329,15 +3318,43 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       target_intelligences: intelligenceKeys,
     };
 
+    // CAS (audit backend vague B) : la complétion n'est écrite que si le défi
+    // n'est PAS déjà completed. Un double-clic / retry client ne peut plus
+    // ré-attribuer talents+XP+badge sur un défi terminé (le trou P1 : les
+    // awards tournaient AVANT toute garde de statut).
     const { data: updated, error } = await db
       .from("challenges")
       .update(patch)
       .eq("id", id)
+      .neq("status", "completed")
       .select("*")
-      .single();
+      .maybeSingle();
 
     if (error) throw new Error(error.message);
+    if (!updated) {
+      // Déjà complété entre-temps (double-clic, retry client) : on renvoie
+      // l'état courant en base, AUCUN award rejoué.
+      const { data: current } = await db.from("challenges").select("*").eq("id", id).maybeSingle();
+      return {
+        challenge: current ?? challenge,
+        observations,
+        awarded_points: awarded,
+        imageAnalyzed,
+        relevant,
+        levelUp: null,
+        badgeUnlocked: null,
+      };
+    }
     updatedChallenge = updated;
+
+    // Increments atomiques APRÈS claim réussi (row-locked, increment_child_talents).
+    if (Object.keys(deltas).length > 0) {
+      const { error: talentsError } = await db.rpc("increment_child_talents", {
+        p_child_id: challenge.child_profiles.id,
+        p_deltas: deltas,
+      });
+      if (talentsError) throw new Error(talentsError.message);
+    }
 
     levelUp = await awardCompletionXP(db, challenge.child_id);
     badgeUnlocked = await checkAndAwardBadge(db, challenge.child_id, challenge.domain);
@@ -3734,16 +3751,11 @@ export async function submitDeclarativeProofCore(params: {
   }
 
   const award = (challenge.declarative_award as Record<string, number> | null) ?? {};
-  if (Object.keys(award).length > 0) {
-    const { error: talentsError } = await db.rpc("increment_child_talents", {
-      p_child_id: challenge.child_id,
-      p_deltas: award,
-    });
-    if (talentsError) throw new Error(talentsError.message);
-  }
 
   const observations = `Bravo ! ${childName} a réussi ${reportedValue} ${target.metric} (objectif : ${target.value}). Une belle preuve de persévérance.`;
 
+  // CAS (audit backend vague B, même trou P1 que validateChallengeProofCore) :
+  // complétion écrite seulement si pas déjà completed ; awards APRÈS claim.
   const { data: updated, error } = await db
     .from("challenges")
     .update({
@@ -3754,9 +3766,30 @@ export async function submitDeclarativeProofCore(params: {
       target_intelligences: Object.keys(award),
     })
     .eq("id", id)
+    .neq("status", "completed")
     .select("*")
-    .single();
+    .maybeSingle();
   if (error) throw new Error(error.message);
+  if (!updated) {
+    const { data: current } = await db.from("challenges").select("*").eq("id", id).maybeSingle();
+    return {
+      challenge: current ?? challenge,
+      observations,
+      awarded_points: award,
+      imageAnalyzed: false,
+      relevant: true,
+      levelUp: null,
+      badgeUnlocked: null,
+    };
+  }
+
+  if (Object.keys(award).length > 0) {
+    const { error: talentsError } = await db.rpc("increment_child_talents", {
+      p_child_id: challenge.child_id,
+      p_deltas: award,
+    });
+    if (talentsError) throw new Error(talentsError.message);
+  }
 
   // Manquait ici jusqu'à présent : validateChallengeProof et updateChallenge
   // l'appellent déjà toutes les deux — un défi validé par déclaration (jongles,

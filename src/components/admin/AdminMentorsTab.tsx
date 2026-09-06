@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { Fragment, useEffect, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import {
@@ -6,6 +6,7 @@ import {
   assignMentorToCampaignAdmin,
   removeMentor,
   updateMentorStatusAdmin,
+  updateMentorCategoryAdmin,
   searchParentsAdmin,
   getChildrenOfParentAdmin,
   searchMentorsAdmin,
@@ -13,6 +14,7 @@ import {
   generateMentorActivationCodesAdmin,
   listMentorActivationCodesAdmin,
   listCampaignsLightAdmin,
+  listCampaignCohortAdmin,
   listMentorSessionsAdmin,
   approveMentorSessionAdmin,
   markMentorSessionsPaidAdmin,
@@ -21,7 +23,9 @@ import {
   type ChildOfParentResult,
   type MentorSearchResult,
   type MentorActivationCodeRow,
+  type CampaignCohortChild,
 } from "@/lib/mentors.functions";
+import type { MentorCategory } from "@/lib/mentor-safeguards";
 import { formatXof } from "@/lib/pricing";
 import { AdminPagination } from "./AdminPagination";
 import {
@@ -43,12 +47,72 @@ import {
   KeyRound,
   HeartHandshake,
   Phone,
+  Stethoscope,
+  Tent,
 } from "lucide-react";
 import { toast } from "sonner";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { AdminSafeguardingAudits } from "./AdminSafeguardingAudits";
 import { AdminSafetyReports } from "./AdminSafetyReports";
 import { getSafeguardingPendingCountAdmin } from "@/lib/safeguarding.functions";
+import {
+  listSquadsAdmin,
+  upsertSquadAdmin,
+  assignSquadFromCampaignAdmin,
+} from "@/lib/saturday-clubs.functions";
+
+// Bandeau qui sépare l'annuaire en deux cadres : Pro (Clinique) d'abord, Soutien (Club) ensuite.
+function MentorSectionHeader({
+  category,
+  mentors,
+}: {
+  category: "pro" | "support";
+  mentors: number;
+}) {
+  const isSupport = category === "support";
+  return (
+    <div
+      className={`flex items-center gap-3 rounded-2xl border-2 px-4 py-3 ${
+        isSupport ? "border-sky-300 bg-sky-50" : "border-purple-300 bg-purple-50"
+      }`}
+    >
+      <div
+        className={`grid size-9 shrink-0 place-items-center rounded-xl text-white ${
+          isSupport ? "bg-sky-500" : "bg-purple-500"
+        }`}
+      >
+        {isSupport ? <Tent className="size-4" /> : <Stethoscope className="size-4" />}
+      </div>
+      <div className="min-w-0">
+        <p
+          className={`font-display text-sm font-black uppercase tracking-wider ${
+            isSupport ? "text-sky-900" : "text-purple-900"
+          }`}
+        >
+          {isSupport
+            ? "Mentors de Soutien — Clubs du Samedi"
+            : "Mentors Pro — Superviseurs Cliniques"}
+        </p>
+        <p
+          className={`text-[11px] font-semibold ${
+            isSupport ? "text-sky-700/80" : "text-purple-700/80"
+          }`}
+        >
+          {isSupport
+            ? "Escouades de 6 à 8 enfants · 10 000 F / mois / enfant · 70 % mentor"
+            : "Remédiation 1-on-1 · ≤ 5 enfants · 15 000 F / séance · 70 % mentor (10 500 F)"}
+        </p>
+      </div>
+      <span
+        className={`ml-auto shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+          isSupport ? "bg-sky-100 text-sky-800" : "bg-purple-100 text-purple-800"
+        }`}
+      >
+        {mentors} mentor{mentors > 1 ? "s" : ""}
+      </span>
+    </div>
+  );
+}
 
 export interface AdminMentorsTabProps {
   onDataChanged?: () => void | Promise<void>;
@@ -76,6 +140,10 @@ export function AdminMentorsTab({
   const [mentorSubTab, setMentorSubTab] = useState<"directory" | "audits" | "safety">("directory");
   const [openReportsCount, setOpenReportsCount] = useState(0);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  // Escouades (deux-modèles) : modal dédié pour le cadre Soutien.
+  const [squadModalFor, setSquadModalFor] = useState<MentorGroup | null>(null);
+  // Assignation 1-on-1 : modal enfant ouvert DEPUIS la carte d'un mentor Pro.
+  const [childAssignFor, setChildAssignFor] = useState<MentorGroup | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -112,6 +180,9 @@ export function AdminMentorsTab({
   const [codes, setCodes] = useState<MentorActivationCodeRow[]>([]);
   const [codesTotal, setCodesTotal] = useState(0);
   const [generatingCodes, setGeneratingCodes] = useState(false);
+  // Deux modèles : chaque code porte la catégorie qu'il activera chez le mentor.
+  const [codeCategory, setCodeCategory] = useState<MentorCategory>("pro");
+  const [codeValidDays, setCodeValidDays] = useState<string>("");
 
   const loadCodes = async () => {
     const opts = session?.access_token
@@ -130,8 +201,17 @@ export function AdminMentorsTab({
       : {};
     setGeneratingCodes(true);
     try {
-      const res = await generateCodesFn({ data: { count }, ...opts });
-      toast.success(`${res.codes.length} code(s) généré(s) — transmettez-les aux futurs mentors.`);
+      const res = await generateCodesFn({
+        data: {
+          count,
+          category: codeCategory,
+          validDays: codeValidDays ? Number(codeValidDays) : undefined,
+        },
+        ...opts,
+      });
+      toast.success(
+        `${res.codes.length} code(s) ${codeCategory === "pro" ? "PRO" : "CLUB"} généré(s) — transmettez-les aux futurs mentors.`,
+      );
       await loadCodes();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur lors de la génération des codes.");
@@ -340,7 +420,43 @@ export function AdminMentorsTab({
   // est structurel : un mentor banni ne reçoit plus d'assignation ni ne peut déclarer
   // de séance (vérifié dans insertMentorAssignments et declareSessionMentor).
   const updateStatusFn = useServerFn(updateMentorStatusAdmin);
+  const updateCategoryFn = useServerFn(updateMentorCategoryAdmin);
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
+
+  // Bascule du modèle d'un mentor (deux-modèles) : Pro (1-on-1) ↔ Soutien (escouades).
+  const handleUpdateCategory = async (mentorUserId: string, category: MentorCategory) => {
+    const label = category === "support" ? "Mentor de Soutien (Club du Samedi)" : "Mentor Pro (Clinique)";
+    if (
+      !(await confirmDialog({
+        title: `Basculer en ${label} ?`,
+        description:
+          category === "support"
+            ? "Ce mentor ne pourra plus recevoir d'enfants en 1-on-1 : il animera des escouades de 6 à 8 enfants (Clubs du Samedi). Ses enfants actifs devront être retirés au préalable."
+            : "Ce mentor redevient Superviseur Clinique : suivi 1-on-1, quota ≤ 5 enfants, 15 000 F/séance. Ses escouades ne sont plus modifiables depuis ce cadre.",
+        confirmLabel: "Basculer",
+      }))
+    )
+      return;
+    setUpdatingStatusId(mentorUserId);
+    // Optimistic UI : la carte change de cadre immédiatement.
+    const previousGroups = groups;
+    setGroups((prev) =>
+      prev.map((g) => (g.mentor_user_id === mentorUserId ? { ...g, category } : g)),
+    );
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+    try {
+      await updateCategoryFn({ data: { mentorUserId, category }, ...opts });
+      toast.success(`Modèle mis à jour : ${label}.`);
+      void onDataChanged?.();
+    } catch (err) {
+      setGroups(previousGroups);
+      toast.error(err instanceof Error ? err.message : "Erreur lors du changement de modèle.");
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  };
 
   const handleUpdateStatus = async (mentorUserId: string, status: string) => {
     const label =
@@ -622,7 +738,7 @@ export function AdminMentorsTab({
                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand px-5 py-2.5 text-sm font-bold text-white hover:bg-brand/90 transition-colors cursor-pointer"
                 >
                   <UserPlus className="size-4" />
-                  <span>Assigner à une campagne</span>
+                  <span>Assigner un mentor</span>
                 </button>
               </div>
 
@@ -641,10 +757,24 @@ export function AdminMentorsTab({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {groups.map((g) => (
+                  {[...groups]
+                    .sort(
+                      (a, b) =>
+                        (a.category === "support" ? 1 : 0) - (b.category === "support" ? 1 : 0),
+                    )
+                    .map((g, i, arr) => (
+                      <Fragment key={g.mentor_user_id}>
+                        {(i === 0 || arr[i - 1].category !== g.category) && (
+                          <MentorSectionHeader
+                            category={g.category}
+                            mentors={arr.filter((m) => m.category === g.category).length}
+                          />
+                        )}
                     <div
                       key={g.mentor_user_id}
-                      className="rounded-3xl border border-ink/10 bg-white p-5 sm:p-6 shadow-sm"
+                      className={`rounded-3xl border border-ink/10 border-t-4 bg-white p-5 sm:p-6 shadow-sm ${
+                        g.category === "support" ? "border-t-sky-400" : "border-t-purple-500"
+                      }`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                         <div className="flex items-center gap-3 min-w-0">
@@ -656,15 +786,25 @@ export function AdminMentorsTab({
                               <p className="text-sm font-bold text-ink truncate">
                                 {g.display_name || g.email}
                               </p>
-                              <span
-                                className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                              <select
+                                value={g.category}
+                                disabled={updatingStatusId === g.mentor_user_id}
+                                onChange={(e) =>
+                                  void handleUpdateCategory(
+                                    g.mentor_user_id,
+                                    e.target.value as MentorCategory,
+                                  )
+                                }
+                                title="Changer le modèle du mentor : Pro (1-on-1 ≤ 5 enfants) ou Soutien (escouades 6-8)"
+                                className={`cursor-pointer rounded-full border-0 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider outline-none ${
                                   g.category === "support"
                                     ? "bg-sky-100 text-sky-800"
                                     : "bg-purple-100 text-purple-800"
                                 }`}
                               >
-                                {g.category === "support" ? "Soutien (Club)" : "Pro (Clinique)"}
-                              </span>
+                                <option value="pro">Pro (Clinique)</option>
+                                <option value="support">Soutien (Club)</option>
+                              </select>
                               {g.display_name && (
                                 <span className="text-xs font-semibold text-ink/50 truncate">
                                   ({g.email})
@@ -814,6 +954,26 @@ export function AdminMentorsTab({
                             Bannir
                           </button>
                         )}
+                        {/* Deux modèles — l'assignation vit sur la carte :
+                            Pro → confier un enfant en 1-on-1 ; Soutien → escouade. */}
+                        {g.category !== "support" && g.status !== "banned" && (
+                          <button
+                            onClick={() => setChildAssignFor(g)}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-700 hover:bg-purple-100 transition-all cursor-pointer"
+                          >
+                            <UserPlus className="size-3.5" />
+                            Assigner un enfant
+                          </button>
+                        )}
+                        {g.category === "support" && g.status !== "banned" && (
+                          <button
+                            onClick={() => setSquadModalFor(g)}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700 hover:bg-sky-100 transition-all cursor-pointer"
+                          >
+                            <Tent className="size-3.5" />
+                            Escouade
+                          </button>
+                        )}
                       </div>
 
                       {/* Ledger payout (Vague C) : dû des séances approuvées + gestion. */}
@@ -893,6 +1053,7 @@ export function AdminMentorsTab({
                         ))}
                       </ul>
                     </div>
+                      </Fragment>
                   ))}
                 </div>
               )}
@@ -922,18 +1083,47 @@ export function AdminMentorsTab({
                   assignation admin.
                 </p>
               </div>
-              <button
-                onClick={() => void handleGenerateCodes(5)}
-                disabled={generatingCodes}
-                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-brand hover:bg-brand/90 text-white px-4 py-2 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
-              >
-                {generatingCodes ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <KeyRound className="size-3.5" />
-                )}
-                Générer 5 codes
-              </button>
+              <div className="flex flex-col sm:flex-row sm:items-end gap-3 shrink-0">
+                <label className="text-xs">
+                  <span className="block font-black uppercase tracking-wider text-ink/60 mb-1">
+                    Modèle
+                  </span>
+                  <select
+                    value={codeCategory}
+                    onChange={(e) => setCodeCategory(e.target.value as MentorCategory)}
+                    className="rounded-xl border-2 border-ink/15 bg-white px-3 py-2 text-xs font-bold text-ink focus:border-brand focus:outline-none"
+                  >
+                    <option value="pro">Pro (Clinique) — MNT-PRO-…</option>
+                    <option value="support">Soutien (Club) — MNT-CLUB-…</option>
+                  </select>
+                </label>
+                <label className="text-xs">
+                  <span className="block font-black uppercase tracking-wider text-ink/60 mb-1">
+                    Validité (jours)
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={codeValidDays}
+                    onChange={(e) => setCodeValidDays(e.target.value)}
+                    placeholder="Jamais"
+                    className="w-24 rounded-xl border-2 border-ink/15 bg-white px-3 py-2 text-xs font-bold text-ink placeholder:text-ink/30 focus:border-brand focus:outline-none"
+                  />
+                </label>
+                <button
+                  onClick={() => void handleGenerateCodes(5)}
+                  disabled={generatingCodes}
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-brand hover:bg-brand/90 text-white px-4 py-2 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {generatingCodes ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <KeyRound className="size-3.5" />
+                  )}
+                  Générer 5 codes
+                </button>
+              </div>
             </div>
 
             {codes.length === 0 ? (
@@ -943,10 +1133,11 @@ export function AdminMentorsTab({
             ) : (
               <>
                 <div className="overflow-x-auto rounded-2xl border border-ink/10">
-                  <table className="w-full min-w-[480px] text-left text-sm">
+                  <table className="w-full min-w-[560px] text-left text-sm">
                     <thead className="border-b border-ink/10 bg-surface/60 text-[11px] font-black uppercase tracking-wider text-ink/60">
                       <tr>
                         <th className="px-4 py-2.5">Code</th>
+                        <th className="px-4 py-2.5">Modèle</th>
                         <th className="px-4 py-2.5">Créé le</th>
                         <th className="px-4 py-2.5">Valable jusqu'au</th>
                         <th className="px-4 py-2.5">Statut</th>
@@ -960,6 +1151,17 @@ export function AdminMentorsTab({
                           <tr key={c.id}>
                             <td className="px-4 py-2.5 font-mono text-xs font-bold text-ink">
                               {c.code}
+                            </td>
+                            <td className="px-4 py-2.5">
+                              {c.category === "support" ? (
+                                <span className="rounded-full bg-sky-100 text-sky-800 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+                                  Club
+                                </span>
+                              ) : (
+                                <span className="rounded-full bg-purple-100 text-purple-800 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+                                  Pro
+                                </span>
+                              )}
                             </td>
                             <td className="px-4 py-2.5 text-xs text-ink/60">
                               {new Date(c.created_at).toLocaleDateString("fr-FR")}
@@ -1127,16 +1329,341 @@ export function AdminMentorsTab({
           }}
         />
       )}
+
+      {/* Assignation 1-on-1 depuis la carte d'un mentor Pro (enfant précis). */}
+      {childAssignFor && (
+        <AssignChildToProModal
+          mentor={childAssignFor}
+          onClose={() => setChildAssignFor(null)}
+          onSuccess={() => {
+            setChildAssignFor(null);
+            void refreshSilently();
+            void onDataChanged?.();
+          }}
+        />
+      )}
+
+      {/* Escouades (deux-modèles) : constitution 6-8 enfants pour un mentor de Soutien. */}
+      {squadModalFor && (
+        <SquadModal
+          mentor={squadModalFor}
+          onClose={() => setSquadModalFor(null)}
+          onSuccess={() => {
+            setSquadModalFor(null);
+            void refreshSilently();
+          }}
+        />
+      )}
     </div>
   );
 }
 
-// Modale d'assignation à deux modes (Vague 3 multicouche, 2026-08-15) :
-//   • « Campagne » (primaire) : campagne + email + nombre d'enfants → le système pioche
-//     automatiquement dans la cohorte parmi les enfants sans mentor ;
-//   • « Parent → Enfant → Mentor » (spec §2-3) : recherche du parent (email/téléphone/nom),
-//     choix de l'enfant parmi SES enfants, choix du mentor, confirmation — jamais une
-//     liste plate de milliers d'enfants à faire défiler.
+// Modale escouade (deux-modèles) : l'admin compose l'escouade (6 à 8 enfants) d'un
+// mentor de Soutien via le flux Parent → Enfant. Le mentor ne choisit jamais ses
+// membres : il consulte la sienne et déclare les séances (SaturdayClubSquadView).
+function SquadModal({
+  mentor,
+  onClose,
+  onSuccess,
+}: {
+  mentor: MentorGroup;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const { session } = useSession();
+  const [name, setName] = useState("Escouade du Samedi");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Membres actuels (escouades actives du mentor).
+  const [existingSquads, setExistingSquads] = useState<
+    Array<{ id: string; name: string; members: Array<{ id: string; name: string }> }>
+  >([]);
+  const [loadingSquads, setLoadingSquads] = useState(true);
+
+  // Sélecteur Parent → Enfants.
+  const [parentQuery, setParentQuery] = useState("");
+  const [parentResults, setParentResults] = useState<ParentSearchResult[]>([]);
+  const [parentSearched, setParentSearched] = useState(false);
+  const [childrenOfParent, setChildrenOfParent] = useState<ChildOfParentResult[]>([]);
+  const [loadingChildren, setLoadingChildren] = useState(false);
+  // Sélection courante : id → nom (pré-remplie avec l'escouade existante via toggle).
+  const [selected, setSelected] = useState<Map<string, string>>(new Map());
+
+  const opts = () =>
+    session?.access_token ? { headers: { Authorization: `Bearer ${session.access_token}` } } : {};
+
+  const squadsFn = useServerFn(listSquadsAdmin);
+  const upsertFn = useServerFn(upsertSquadAdmin);
+  const searchParentsFn = useServerFn(searchParentsAdmin);
+  const childrenOfParentFn = useServerFn(getChildrenOfParentAdmin);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await squadsFn({ data: { mentorUserId: mentor.mentor_user_id }, ...opts() });
+        const squads = ((res as any) ?? []) as Array<{
+          id: string;
+          name: string;
+          members: Array<{ id: string; name: string }>;
+        }>;
+        setExistingSquads(squads);
+        if (squads[0]) {
+          setName(squads[0].name);
+          setSelected(new Map(squads[0].members.map((m) => [m.id, m.name])));
+        }
+      } catch {
+        setExistingSquads([]);
+      } finally {
+        setLoadingSquads(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mentor.mentor_user_id]);
+
+  const handleSearchParents = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!parentQuery.trim()) return;
+    try {
+      const res = await searchParentsFn({ data: { query: parentQuery.trim() }, ...opts() });
+      setParentResults((res as any) ?? []);
+      setParentSearched(true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de la recherche du parent.");
+    }
+  };
+
+  const handleSelectParent = async (parent: ParentSearchResult) => {
+    setLoadingChildren(true);
+    try {
+      const res = await childrenOfParentFn({ data: { parentId: parent.user_id }, ...opts() });
+      setChildrenOfParent((res as any) ?? []);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors du chargement des enfants.");
+    } finally {
+      setLoadingChildren(false);
+    }
+  };
+
+  const toggleChild = (child: ChildOfParentResult) => {
+    if (!child.is_active) return;
+    setSelected((prev) => {
+      const next = new Map(prev);
+      if (next.has(child.id)) next.delete(child.id);
+      else next.set(child.id, child.name);
+      return next;
+    });
+  };
+
+  const handleSubmit = async () => {
+    if (selected.size < 6 || selected.size > 8) {
+      toast.error("Une escouade compte entre 6 et 8 enfants.");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      // Une seule escouade active par passage : si le mentor en a 2, on met à jour la
+      // première (l'aperçu ci-dessus l'annonce) — le serveur borne de toute façon à 2.
+      await upsertFn({
+        data: {
+          mentorUserId: mentor.mentor_user_id,
+          name: name.trim() || "Escouade du Samedi",
+          childProfileIds: [...selected.keys()],
+          squadId: existingSquads[0]?.id,
+        },
+        ...opts(),
+      });
+      toast.success(
+        `Escouade enregistrée pour ${mentor.display_name || mentor.email} — ${selected.size} enfants.`,
+      );
+      onSuccess();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de l'enregistrement.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white my-auto rounded-[2rem] w-full max-w-lg p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 relative flex flex-col max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display font-black text-xl text-ink flex items-center gap-2">
+            <Tent className="size-5 text-sky-600" />
+            Escouade — {mentor.display_name || mentor.email}
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors cursor-pointer"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+
+        {loadingSquads ? (
+          <p className="flex items-center gap-2 text-xs font-semibold text-ink/40 py-3">
+            <Loader2 className="size-3.5 animate-spin" /> Chargement des escouades actuelles…
+          </p>
+        ) : existingSquads.length > 0 ? (
+          <div className="mb-4 space-y-2">
+            <p className="text-[11px] font-black uppercase tracking-widest text-sky-700">
+              {existingSquads.length === 1
+                ? "Escouade actuelle — enregistrer ajustera ses membres et son nom"
+                : `${existingSquads.length} escouades actives — l'enregistrement ajuste la première`}
+            </p>
+            {existingSquads.map((s) => (
+              <div key={s.id} className="rounded-2xl border border-sky-200 bg-sky-50 px-3 py-2">
+                <p className="text-xs font-black text-sky-900">{s.name}</p>
+                <p className="text-[11px] font-semibold text-sky-700/80">
+                  {s.members.map((m) => m.name).join(", ") || "Aucun membre"}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mb-4 text-[11px] font-semibold text-ink/40">
+            Aucune escouade active — composez-en une (6 à 8 enfants).
+          </p>
+        )}
+
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
+              Nom de l'escouade
+            </label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={80}
+              className="w-full bg-surface border border-ink/10 rounded-2xl p-3 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+            />
+          </div>
+
+          <form onSubmit={handleSearchParents} className="flex gap-2">
+            <input
+              type="text"
+              value={parentQuery}
+              onChange={(e) => setParentQuery(e.target.value)}
+              placeholder="Rechercher un parent (email, tél, nom) pour ajouter ses enfants…"
+              className="flex-1 min-w-0 bg-surface border border-ink/10 rounded-2xl p-3 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+            />
+            <button
+              type="submit"
+              disabled={!parentQuery.trim()}
+              className="px-4 py-3 bg-ink hover:bg-ink/90 text-white rounded-2xl font-bold flex items-center transition-all cursor-pointer disabled:opacity-50"
+            >
+              {parentQuery.trim() ? <Search className="size-4" /> : <Search className="size-4" />}
+            </button>
+          </form>
+
+          {parentSearched && parentResults.length === 0 && (
+            <p className="text-sm font-semibold text-ink/50 text-center">
+              Aucun compte trouvé pour cette recherche.
+            </p>
+          )}
+          {parentResults.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {parentResults.map((p) => (
+                <button
+                  key={p.user_id}
+                  type="button"
+                  onClick={() => void handleSelectParent(p)}
+                  className="rounded-xl border border-ink/10 bg-white px-3 py-1.5 text-xs font-bold text-ink hover:bg-surface transition-all cursor-pointer"
+                >
+                  {p.display_name || p.email}{" "}
+                  <span className="text-ink/40">({p.child_count} enf.)</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {loadingChildren && (
+            <p className="flex items-center gap-2 text-xs font-semibold text-ink/40">
+              <Loader2 className="size-3.5 animate-spin" /> Chargement des enfants…
+            </p>
+          )}
+          {childrenOfParent.length > 0 && (
+            <div className="space-y-1.5">
+              {childrenOfParent.map((child) => {
+                const checked = selected.has(child.id);
+                return (
+                  <label
+                    key={child.id}
+                    className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors ${
+                      !child.is_active
+                        ? "cursor-not-allowed opacity-50"
+                        : checked
+                          ? "cursor-pointer bg-sky-100 font-bold text-ink"
+                          : "cursor-pointer bg-surface hover:bg-sky-50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={!child.is_active}
+                      onChange={() => toggleChild(child)}
+                      className="size-4 accent-sky-600"
+                    />
+                    <span className="min-w-0 flex-1 truncate font-bold">
+                      {child.name}
+                      {child.age != null ? (
+                        <span className="text-ink/40 font-medium"> ({child.age} ans)</span>
+                      ) : null}
+                    </span>
+                    {child.current_mentor_email && (
+                      <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-700">
+                        Suivi 1-on-1 : {child.current_mentor_email}
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-ink/10 bg-white pt-3">
+            <span
+              className={`text-xs font-black ${
+                selected.size >= 6 && selected.size <= 8 ? "text-emerald-600" : "text-ink/50"
+              }`}
+            >
+              {selected.size} / 6-8 sélectionné{selected.size > 1 ? "s" : ""}
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2.5 bg-surface hover:bg-ink/5 text-ink rounded-2xl text-sm font-bold transition-colors cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSubmit()}
+                disabled={isSubmitting || selected.size < 6 || selected.size > 8}
+                className="px-4 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl text-sm font-bold transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Tent className="size-4" />
+                )}
+                Enregistrer l'escouade
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Modale « Assigner un mentor » — point d'entrée UNIQUE pour l'assignation DEPUIS
+// UNE CAMPAGNE, ouverte aux deux modèles (une campagne ONG peut financer des Clubs
+// du Samedi comme de la remédiation 1-on-1) :
+//   • Mentor Pro → suivi 1-on-1 : sélection explicite d'enfants de la cohorte (≤ quota) ;
+//   • Mentor de Soutien → escouade Club du Samedi : 6 à 8 enfants de la cohorte.
+// L'assignation enfant-par-enfant HORS campagne vit sur la carte du mentor Pro
+// (AssignChildToProModal) — la logique vit là où on la cherche.
 function AssignMentorModal({
   campaigns,
   onClose,
@@ -1147,40 +1674,410 @@ function AssignMentorModal({
   onSuccess: () => void;
 }) {
   const { session } = useSession();
-  const [mode, setMode] = useState<"campaign" | "child">("campaign");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Étape 0 : quel type d'accompagnement ? (détermine la suite du flux et le serveur)
+  const [assignType, setAssignType] = useState<"pro" | "support" | null>(null);
 
-  // Mode campagne
+  // Campagne + cohorte (commun aux deux types)
   const [campaignId, setCampaignId] = useState("");
-  const [email, setEmail] = useState("");
-  const [count, setCount] = useState(5);
+  const [cohort, setCohort] = useState<CampaignCohortChild[]>([]);
+  const [loadingCohort, setLoadingCohort] = useState(false);
+  const [selectedChildIds, setSelectedChildIds] = useState<Set<string>>(new Set());
 
-  // Mode relationnel — étapes : 0 parent, 1 enfant, 2 mentor, 3 confirmation
-  const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
+  // Mentor : résolu par email, catégorie vérifiée avant validation.
+  const [email, setEmail] = useState("");
+  const [mentorPreview, setMentorPreview] = useState<MentorSearchResult | null>(null);
+  const [previewingMentor, setPreviewingMentor] = useState(false);
+
+  const assignCampaignFn = useServerFn(assignMentorToCampaignAdmin);
+  const assignSquadFn = useServerFn(assignSquadFromCampaignAdmin);
+  const cohortFn = useServerFn(listCampaignCohortAdmin);
+  const searchMentorsFn = useServerFn(searchMentorsAdmin);
+
+  const opts = () =>
+    session?.access_token ? { headers: { Authorization: `Bearer ${session.access_token}` } } : {};
+
+  const isSupport = assignType === "support";
+  const count = selectedChildIds.size;
+  const supportCountOk = count >= 6 && count <= 8;
+  const typeMismatch = mentorPreview != null && mentorPreview.category !== assignType;
+
+  // Changement de campagne → chargement de la cohorte (enfants inscrits + drapeau mentor).
+  const handleCampaignChange = async (id: string) => {
+    setCampaignId(id);
+    setSelectedChildIds(new Set());
+    if (!id) {
+      setCohort([]);
+      return;
+    }
+    setLoadingCohort(true);
+    try {
+      const res = await cohortFn({ data: { campaignId: id }, ...opts() });
+      setCohort((res as any) ?? []);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors du chargement de la cohorte.");
+    } finally {
+      setLoadingCohort(false);
+    }
+  };
+
+  const toggleCohortChild = (child: CampaignCohortChild) => {
+    if (child.already_mentored) return;
+    setSelectedChildIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(child.id)) next.delete(child.id);
+      else next.add(child.id);
+      return next;
+    });
+  };
+
+  // Aperçu du mentor (catégorie + quota restant) dès que l'email est complet.
+  useEffect(() => {
+    setMentorPreview(null);
+    const q = email.trim();
+    if (!q.includes("@") || q.length < 5) return;
+    const t = setTimeout(async () => {
+      setPreviewingMentor(true);
+      try {
+        const res = await searchMentorsFn({ data: { query: q }, ...opts() });
+        const found = ((res as any) ?? []) as MentorSearchResult[];
+        setMentorPreview(
+          found.find((m) => m.email.toLowerCase() === q.toLowerCase()) ?? found[0] ?? null,
+        );
+      } catch {
+        // Aperçu silencieux : le serveur revalidera à la soumission.
+      } finally {
+        setPreviewingMentor(false);
+      }
+    }, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email]);
+
+  const handleSubmit = async () => {
+    if (!assignType || !campaignId || count === 0) {
+      toast.error("Choisissez le type d'accompagnement, la campagne et au moins un enfant.");
+      return;
+    }
+    if (isSupport && !supportCountOk) {
+      toast.error("Une escouade du Club du Samedi compte entre 6 et 8 enfants.");
+      return;
+    }
+    if (!mentorPreview) {
+      toast.error("Saisissez l'email du mentor — le compte doit exister.");
+      return;
+    }
+    if (typeMismatch) {
+      toast.error(
+        `${mentorPreview.email} est un mentor ${mentorPreview.category === "support" ? "de Soutien (Club)" : "Pro (Clinique)"} — choisissez le type correspondant en haut du formulaire.`,
+      );
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      if (isSupport) {
+        await assignSquadFn({
+          data: {
+            campaignId,
+            mentorUserId: mentorPreview.user_id,
+            childProfileIds: [...selectedChildIds],
+          },
+          ...opts(),
+        });
+        toast.success(
+          `Escouade du Samedi créée pour ${mentorPreview.email} — ${count} enfants de la campagne.`,
+        );
+      } else {
+        const res = await assignCampaignFn({
+          data: { campaignId, mentorEmail: email.trim(), childIds: [...selectedChildIds] },
+          ...opts(),
+        });
+        toast.success(
+          `${res.assignedCount} enfant(s) confié(s) à ${email.trim()} sur cette campagne !`,
+        );
+      }
+      onSuccess();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de l'assignation.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white my-auto rounded-[2rem] w-full max-w-lg p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 relative flex flex-col max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display font-black text-xl text-ink flex items-center gap-2">
+            <UserPlus className="size-6 text-brand" />
+            Assigner via une campagne
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors cursor-pointer"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+
+        {/* Étape 0 — le type d'accompagnement, choisi d'emblée */}
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          {(
+            [
+              {
+                value: "pro" as const,
+                title: "Mentor Pro",
+                sub: "Suivi 1-on-1 · ≤ 5 enfants · 15 000 F/séance",
+                active: "border-purple-500 bg-purple-50 text-purple-900",
+                chip: "bg-purple-500",
+              },
+              {
+                value: "support" as const,
+                title: "Mentor de Soutien",
+                sub: "Escouade Club du Samedi · 6 à 8 enfants",
+                active: "border-sky-500 bg-sky-50 text-sky-900",
+                chip: "bg-sky-500",
+              },
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.value}
+              type="button"
+              onClick={() => setAssignType(t.value)}
+              className={`rounded-2xl border-2 p-3 text-left transition-all cursor-pointer ${
+                assignType === t.value
+                  ? t.active
+                  : "border-ink/10 bg-white text-ink hover:border-ink/30"
+              }`}
+            >
+              <span
+                className={`mb-1.5 inline-flex size-6 items-center justify-center rounded-full text-[10px] font-black text-white ${
+                  assignType === t.value ? t.chip : "bg-ink/20"
+                }`}
+              >
+                {assignType === t.value ? "✓" : ""}
+              </span>
+              <p className="text-xs font-black">{t.title}</p>
+              <p className="text-[10px] font-semibold opacity-70 leading-snug">{t.sub}</p>
+            </button>
+          ))}
+        </div>
+
+        {assignType ? (
+          <div className="space-y-4">
+            <p className="text-xs sm:text-sm font-medium text-ink/70 leading-relaxed">
+              {isSupport
+                ? "Sélectionnez 6 à 8 enfants de la cohorte : ils rejoignent l'escouade du Club du Samedi de ce mentor (ateliers collectifs du samedi matin)."
+                : "Sélectionnez explicitement les enfants de la cohorte à confier au mentor — dans la limite de son quota. Les séances seront financées par le compartiment séances de la campagne au moment de leur déclaration."}
+            </p>
+            <div>
+              <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
+                Campagne
+              </label>
+              <select
+                required
+                value={campaignId}
+                onChange={(e) => void handleCampaignChange(e.target.value)}
+                className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer"
+              >
+                <option value="">Sélectionner une campagne…</option>
+                {campaigns.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Cohorte : sélection explicite enfant par enfant */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-extrabold uppercase tracking-widest text-ink/50">
+                  Enfants de la cohorte {cohort.length > 0 && `(${cohort.length})`}
+                </label>
+                {count > 0 && (
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                      isSupport && !supportCountOk
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-brand/10 text-brand"
+                    }`}
+                  >
+                    {count} sélectionné{count > 1 ? "s" : ""}
+                    {isSupport ? " / 6-8" : ""}
+                  </span>
+                )}
+              </div>
+              {!campaignId ? (
+                <p className="rounded-2xl border border-dashed border-ink/15 px-3 py-4 text-center text-xs font-semibold text-ink/40">
+                  Choisissez d'abord une campagne.
+                </p>
+              ) : loadingCohort ? (
+                <p className="flex items-center justify-center gap-2 rounded-2xl border border-ink/10 px-3 py-4 text-xs font-semibold text-ink/40">
+                  <Loader2 className="size-3.5 animate-spin" /> Chargement de la cohorte…
+                </p>
+              ) : cohort.length === 0 ? (
+                <p className="rounded-2xl border border-dashed border-ink/15 px-3 py-4 text-center text-xs font-semibold text-ink/40">
+                  Aucun enfant inscrit dans cette campagne.
+                </p>
+              ) : (
+                <div className="max-h-48 space-y-1.5 overflow-y-auto rounded-2xl border border-ink/10 bg-surface p-2">
+                  {cohort.map((child) => {
+                    const checked = selectedChildIds.has(child.id);
+                    return (
+                      <label
+                        key={child.id}
+                        className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors ${
+                          child.already_mentored
+                            ? "cursor-not-allowed opacity-50"
+                            : checked
+                              ? "cursor-pointer bg-brand/10 font-bold text-ink"
+                              : "cursor-pointer bg-white hover:bg-brand/5"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={child.already_mentored}
+                          onChange={() => toggleCohortChild(child)}
+                          className="size-4 accent-[var(--brand)]"
+                        />
+                        <span className="min-w-0 flex-1 truncate font-bold">
+                          {child.name}
+                          {child.age != null ? (
+                            <span className="text-ink/40 font-medium"> ({child.age} ans)</span>
+                          ) : null}
+                        </span>
+                        {child.already_mentored && (
+                          <span className="shrink-0 rounded-full bg-ink/5 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-ink/50">
+                            Déjà accompagné
+                          </span>
+                        )}
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
+                Email du {isSupport ? "mentor de Soutien" : "mentor Pro"} (compte Génizio)
+              </label>
+              <input
+                required
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="mentor@ong.org"
+                className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+              />
+              {previewingMentor && (
+                <p className="mt-1 text-[11px] font-semibold text-ink/40 flex items-center gap-1">
+                  <Loader2 className="size-3 animate-spin" /> Vérification du compte…
+                </p>
+              )}
+              {!previewingMentor && mentorPreview && !typeMismatch && (
+                <div
+                  className={`mt-1.5 rounded-xl border px-3 py-2 text-[11px] font-bold ${
+                    isSupport
+                      ? "border-sky-200 bg-sky-50 text-sky-800"
+                      : "border-purple-200 bg-purple-50 text-purple-800"
+                  }`}
+                >
+                  {isSupport
+                    ? "Mentor de Soutien (Club) reconnu — sélectionnez 6 à 8 enfants ci-dessus pour son escouade."
+                    : `Mentor Pro (Clinique) · Quota ${mentorPreview.quota} · Déjà ${mentorPreview.active_assignments} enfant(s) · ${Math.max(0, mentorPreview.quota - mentorPreview.active_assignments)} place(s) restante(s)`}
+                </div>
+              )}
+              {!previewingMentor && mentorPreview && typeMismatch && (
+                <div className="mt-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-800">
+                  Ce compte est un mentor{" "}
+                  {mentorPreview.category === "support" ? "de Soutien (Club)" : "Pro (Clinique)"} —
+                  choisissez le type correspondant en haut du formulaire.
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 pt-4 border-t border-ink/5">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-bold transition-colors cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSubmit()}
+                disabled={
+                  isSubmitting ||
+                  count === 0 ||
+                  (isSupport && !supportCountOk) ||
+                  typeMismatch ||
+                  !mentorPreview
+                }
+                className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="size-5 animate-spin" />
+                ) : isSupport ? (
+                  <Tent className="size-4" />
+                ) : (
+                  <Plus className="size-4" />
+                )}
+                <span>
+                  {isSupport
+                    ? `Constituer l'escouade${supportCountOk ? ` (${count})` : ""}`
+                    : `Confier ${count > 0 ? `${count} enfant(s)` : "la sélection"}`}
+                </span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="rounded-2xl border border-dashed border-ink/15 px-3 py-4 text-center text-xs font-semibold text-ink/40">
+            Choisissez d'abord le type d'accompagnement ci-dessus.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Modale d'assignation 1-on-1 DEPUIS LA CARTE d'un mentor Pro : Parent → Enfant →
+// confirmation (le mentor est figé — c'est lui qu'on équipe). Hors campagne, le
+// financement des séances est résolu à la déclaration (pack famille, sinon campagne
+// de la dernière inscription de l'enfant).
+function AssignChildToProModal({
+  mentor,
+  onClose,
+  onSuccess,
+}: {
+  mentor: MentorGroup;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const { session } = useSession();
+  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedParent, setSelectedParent] = useState<ParentSearchResult | null>(null);
   const [parentQuery, setParentQuery] = useState("");
   const [parentResults, setParentResults] = useState<ParentSearchResult[]>([]);
   const [searchingParents, setSearchingParents] = useState(false);
   const [parentSearched, setParentSearched] = useState(false);
-  const [selectedParent, setSelectedParent] = useState<ParentSearchResult | null>(null);
   const [childrenOfParent, setChildrenOfParent] = useState<ChildOfParentResult[]>([]);
   const [loadingChildren, setLoadingChildren] = useState(false);
   const [selectedChild, setSelectedChild] = useState<ChildOfParentResult | null>(null);
-  const [mentorQuery, setMentorQuery] = useState("");
-  const [mentorResults, setMentorResults] = useState<MentorSearchResult[]>([]);
-  const [searchingMentors, setSearchingMentors] = useState(false);
-  const [mentorSearched, setMentorSearched] = useState(false);
-  const [selectedMentor, setSelectedMentor] = useState<MentorSearchResult | null>(null);
 
-  const assignCampaignFn = useServerFn(assignMentorToCampaignAdmin);
   const searchParentsFn = useServerFn(searchParentsAdmin);
   const childrenOfParentFn = useServerFn(getChildrenOfParentAdmin);
-  const searchMentorsFn = useServerFn(searchMentorsAdmin);
   const assignChildFn = useServerFn(assignMentorToChildAdmin);
 
   const opts = () =>
     session?.access_token ? { headers: { Authorization: `Bearer ${session.access_token}` } } : {};
 
-  // Étape 0 : recherche du parent
+  const quotaLeft = Math.max(0, mentor.quota - mentor.totalChildren);
+
   const handleSearchParents = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!parentQuery.trim()) return;
@@ -1196,15 +2093,11 @@ function AssignMentorModal({
     }
   };
 
-  // Étape 0 → 1 : sélection du parent puis chargement de ses enfants
   const handleSelectParent = async (parent: ParentSearchResult) => {
     setSelectedParent(parent);
     setLoadingChildren(true);
     try {
-      const res = await childrenOfParentFn({
-        data: { parentId: parent.user_id },
-        ...opts(),
-      });
+      const res = await childrenOfParentFn({ data: { parentId: parent.user_id }, ...opts() });
       setChildrenOfParent((res as any) ?? []);
       setStep(1);
     } catch (err) {
@@ -1214,37 +2107,20 @@ function AssignMentorModal({
     }
   };
 
-  // Étape 2 : recherche du mentor
-  const handleSearchMentors = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!mentorQuery.trim()) return;
-    setSearchingMentors(true);
-    try {
-      const res = await searchMentorsFn({ data: { query: mentorQuery.trim() }, ...opts() });
-      setMentorResults((res as any) ?? []);
-      setMentorSearched(true);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erreur lors de la recherche du mentor.");
-    } finally {
-      setSearchingMentors(false);
-    }
-  };
-
-  // Étape 3 : confirmation + assignation via le choke-point insertMentorAssignments
   const handleAssign = async () => {
-    if (!selectedParent || !selectedChild || !selectedMentor) return;
+    if (!selectedParent || !selectedChild) return;
     setIsSubmitting(true);
     try {
       await assignChildFn({
         data: {
           parentId: selectedParent.user_id,
           childId: selectedChild.id,
-          mentorId: selectedMentor.user_id,
+          mentorId: mentor.mentor_user_id,
         },
         ...opts(),
       });
       toast.success(
-        `${selectedChild.name} est maintenant suivi(e) par ${selectedMentor.email} (parent : ${selectedParent.email}).`,
+        `${selectedChild.name} est maintenant suivi(e) par ${mentor.display_name || mentor.email}.`,
       );
       onSuccess();
     } catch (err) {
@@ -1252,53 +2128,15 @@ function AssignMentorModal({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleCampaignSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!campaignId || !email.trim()) {
-      toast.error("Campagne et email du mentor requis.");
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      const res = await assignCampaignFn({
-        data: { campaignId, mentorEmail: email.trim(), count },
-        ...opts(),
-      });
-      toast.success(
-        `${res.assignedCount} enfant(s) confié(s) à ${email.trim()} sur cette campagne !`,
-      );
-      onSuccess();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erreur lors de l'assignation.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const resetChildFlow = () => {
-    setStep(0);
-    setParentQuery("");
-    setParentResults([]);
-    setParentSearched(false);
-    setSelectedParent(null);
-    setChildrenOfParent([]);
-    setLoadingChildren(false);
-    setSelectedChild(null);
-    setMentorQuery("");
-    setMentorResults([]);
-    setMentorSearched(false);
-    setSelectedMentor(null);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm overflow-y-auto">
       <div className="bg-white my-auto rounded-[2rem] w-full max-w-lg p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 relative flex flex-col max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-4">
           <h3 className="font-display font-black text-xl text-ink flex items-center gap-2">
             <UserPlus className="size-6 text-brand" />
-            Assigner un mentor
+            Confier un enfant
           </h3>
           <button
             onClick={onClose}
@@ -1308,393 +2146,174 @@ function AssignMentorModal({
           </button>
         </div>
 
-        <div className="flex gap-1.5 mb-5 bg-surface rounded-2xl p-1.5">
-          {(["campaign", "child"] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setMode(m)}
-              className={
-                "flex-1 rounded-xl px-3 py-2 text-xs font-bold transition-all cursor-pointer " +
-                (mode === m ? "bg-ink text-white shadow-sm" : "text-ink/60 hover:bg-white/70")
-              }
-            >
-              {m === "campaign" ? (
-                <>
-                  <Building2 className="size-3.5 inline mr-1 -mt-0.5" />À une campagne
-                </>
-              ) : (
-                <>
-                  <GraduationCap className="size-3.5 inline mr-1 -mt-0.5" />À un enfant précis
-                </>
-              )}
-            </button>
-          ))}
+        {/* Le mentor est FIGÉ — c'est depuis sa carte qu'on est parti. */}
+        <div className="mb-4 flex items-center justify-between gap-2 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-2.5 text-xs font-bold text-purple-800">
+          <span className="min-w-0 truncate">
+            {mentor.display_name ? `${mentor.display_name} · ${mentor.email}` : mentor.email}
+          </span>
+          <span className="shrink-0">
+            {mentor.totalChildren}/{mentor.quota} · {quotaLeft} place(s)
+          </span>
         </div>
 
-        {mode === "campaign" ? (
-          <form onSubmit={handleCampaignSubmit} className="space-y-4">
+        {step === 0 && (
+          <div className="space-y-3">
             <p className="text-xs sm:text-sm font-medium text-ink/70 leading-relaxed">
-              L'application confie automatiquement des enfants de la cohorte qui n'ont encore aucun
-              mentor — jusqu'au nombre demandé, dans la limite du quota du mentor (5 enfants max, «
-              5 par 5 »).
+              Trouvez le parent ou tuteur (email, téléphone ou nom), puis choisissez parmi ses
+              enfants.
             </p>
-            <div>
-              <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
-                Campagne
-              </label>
-              <select
-                required
-                value={campaignId}
-                onChange={(e) => setCampaignId(e.target.value)}
-                className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer"
+            <form onSubmit={handleSearchParents} className="flex gap-2">
+              <input
+                type="text"
+                value={parentQuery}
+                onChange={(e) => setParentQuery(e.target.value)}
+                placeholder="Email, téléphone ou nom du parent…"
+                className="flex-1 min-w-0 bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+              />
+              <button
+                type="submit"
+                disabled={searchingParents || !parentQuery.trim()}
+                className="px-4 py-3 bg-ink hover:bg-ink/90 text-white rounded-2xl font-bold flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
               >
-                <option value="">Sélectionner une campagne…</option>
-                {campaigns.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
-                Email du mentor (compte Génizio)
-              </label>
-              <input
-                required
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="mentor@ong.org"
-                className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
-                Nombre d'enfants à confier (max 5)
-              </label>
-              <input
-                required
-                type="number"
-                min={1}
-                max={5}
-                value={count}
-                onChange={(e) => setCount(Math.max(1, Math.min(5, parseInt(e.target.value) || 1)))}
-                className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
-              />
-            </div>
+                {searchingParents ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Search className="size-4" />
+                )}
+                Chercher
+              </button>
+            </form>
+            {parentSearched && parentResults.length === 0 && (
+              <p className="text-sm font-semibold text-ink/50 py-3 text-center">
+                Aucun compte trouvé pour cette recherche.
+              </p>
+            )}
+            <ul className="space-y-2">
+              {parentResults.map((p) => (
+                <li
+                  key={p.user_id}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-ink/10 bg-surface px-4 py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-ink truncate">
+                      {p.display_name || p.email}
+                    </p>
+                    <p className="text-[11px] font-semibold text-ink/50 truncate">
+                      {p.email} · {p.child_count} enfant{p.child_count > 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleSelectParent(p)}
+                    className="shrink-0 rounded-xl bg-ink px-3 py-1.5 text-xs font-bold text-white hover:bg-ink/90 transition-all cursor-pointer"
+                  >
+                    Choisir
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
+        {step === 1 && (
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={() => setStep(0)}
+              className="text-xs font-bold text-ink/50 hover:text-ink transition-colors cursor-pointer"
+            >
+              ← Changer de parent
+            </button>
+            {loadingChildren ? (
+              <p className="flex items-center gap-2 text-xs font-semibold text-ink/40">
+                <Loader2 className="size-3.5 animate-spin" /> Chargement des enfants…
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {childrenOfParent.map((c) => (
+                  <li
+                    key={c.id}
+                    className={
+                      "flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 " +
+                      (c.is_active
+                        ? "border-ink/10 bg-surface"
+                        : "border-ink/5 bg-surface/50 opacity-60")
+                    }
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-ink truncate">
+                        {c.name}
+                        {c.age != null ? (
+                          <span className="text-ink/40 font-medium"> ({c.age} ans)</span>
+                        ) : null}
+                      </p>
+                      {c.current_mentor_email && (
+                        <p className="text-[11px] font-semibold text-ink/50 truncate">
+                          Déjà accompagné par {c.current_mentor_email}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={!c.is_active || quotaLeft <= 0}
+                      onClick={() => {
+                        setSelectedChild(c);
+                        setStep(2);
+                      }}
+                      className="shrink-0 rounded-xl bg-ink px-3 py-1.5 text-xs font-bold text-white hover:bg-ink/90 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {quotaLeft <= 0 ? "Complet" : "Choisir"}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {step === 2 && selectedChild && (
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-ink/10 bg-surface p-4 space-y-2.5">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-black text-ink w-20 shrink-0">Enfant</span>
+                <span className="font-semibold text-ink/70 truncate min-w-0 flex-1">
+                  {selectedChild.name}
+                  {selectedChild.age != null ? ` (${selectedChild.age} ans)` : ""}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-black text-ink w-20 shrink-0">Mentor</span>
+                <span className="font-semibold text-ink/70 truncate min-w-0 flex-1">
+                  {mentor.display_name ? `${mentor.display_name} (${mentor.email})` : mentor.email}
+                </span>
+              </div>
+            </div>
+            <p className="text-xs text-ink/50 leading-relaxed">
+              Le financement des séances est résolu au moment de leur déclaration : pack famille,
+              sinon la campagne de la dernière inscription de l'enfant.
+            </p>
             <div className="flex gap-3 pt-4 border-t border-ink/5">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => setStep(1)}
                 className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-bold transition-colors cursor-pointer"
               >
-                Annuler
+                Retour
               </button>
               <button
-                type="submit"
+                type="button"
                 disabled={isSubmitting}
+                onClick={() => void handleAssign()}
                 className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <Loader2 className="size-5 animate-spin" />
                 ) : (
-                  <Plus className="size-4" />
+                  <UserPlus className="size-4" />
                 )}
-                <span>Assigner à la campagne</span>
+                <span>Confier l'enfant</span>
               </button>
             </div>
-          </form>
-        ) : (
-          <div className="space-y-4">
-            {/* Étape 0 — recherche du parent (spec §2-3, §23) */}
-            {step === 0 && (
-              <>
-                <p className="text-xs sm:text-sm font-medium text-ink/70 leading-relaxed">
-                  Trouvez d'abord le parent ou tuteur (email, téléphone ou nom), puis choisissez
-                  parmi ses enfants. La liste complète des enfants n'est jamais parcourue.
-                </p>
-                <form onSubmit={handleSearchParents} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={parentQuery}
-                    onChange={(e) => setParentQuery(e.target.value)}
-                    placeholder="Email, téléphone ou nom du parent…"
-                    className="flex-1 min-w-0 bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
-                  />
-                  <button
-                    type="submit"
-                    disabled={searchingParents || !parentQuery.trim()}
-                    className="px-4 py-3 bg-ink hover:bg-ink/90 text-white rounded-2xl font-bold flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
-                  >
-                    {searchingParents ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <Search className="size-4" />
-                    )}
-                    Chercher
-                  </button>
-                </form>
-
-                {parentSearched && parentResults.length === 0 && (
-                  <p className="text-sm font-semibold text-ink/50 py-3 text-center">
-                    Aucun compte trouvé pour cette recherche.
-                  </p>
-                )}
-                <ul className="space-y-2">
-                  {parentResults.map((p) => (
-                    <li
-                      key={p.user_id}
-                      className="flex items-center justify-between gap-3 rounded-2xl border border-ink/10 bg-surface px-4 py-3"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-ink truncate">{p.email}</p>
-                        <p className="text-[11px] font-semibold text-ink/50 truncate">
-                          {[p.display_name, p.phone && `Tél : ${p.phone}`]
-                            .filter(Boolean)
-                            .join(" · ") || "—"}{" "}
-                          · {p.child_count} enfant{p.child_count > 1 ? "s" : ""}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => void handleSelectParent(p)}
-                        className="shrink-0 rounded-xl bg-ink px-3 py-1.5 text-xs font-bold text-white hover:bg-ink/90 transition-all cursor-pointer"
-                      >
-                        Choisir
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-
-            {/* Étape 1 — choix de l'enfant parmi ceux du parent */}
-            {step === 1 && (
-              <>
-                <div className="flex items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStep(0);
-                      setSelectedParent(null);
-                      setParentResults([]);
-                      setParentSearched(false);
-                    }}
-                    className="text-xs font-bold text-ink/50 hover:text-ink transition-colors cursor-pointer"
-                  >
-                    ← Changer de parent
-                  </button>
-                  <p className="text-xs font-bold text-ink/70 truncate min-w-0">
-                    {selectedParent?.email} · {childrenOfParent.length} enfant
-                    {childrenOfParent.length > 1 ? "s" : ""}
-                  </p>
-                </div>
-
-                {loadingChildren ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="size-6 animate-spin text-brand" />
-                  </div>
-                ) : childrenOfParent.length === 0 ? (
-                  <p className="text-sm font-semibold text-ink/50 py-3 text-center">
-                    Ce parent n'a pas encore d'enfant inscrit.
-                  </p>
-                ) : (
-                  <ul className="space-y-2">
-                    {childrenOfParent.map((c) => {
-                      const taken = Boolean(c.current_mentor_email);
-                      return (
-                        <li
-                          key={c.id}
-                          className={
-                            "flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 " +
-                            (taken
-                              ? "border-ink/5 bg-surface/50 opacity-60"
-                              : "border-ink/10 bg-surface")
-                          }
-                        >
-                          <div className="min-w-0">
-                            <p className="text-sm font-bold text-ink truncate">
-                              {c.name}{" "}
-                              <span className="font-semibold text-ink/50">
-                                {c.age != null ? `· ${c.age} ans` : ""}
-                              </span>
-                            </p>
-                            <p className="text-[11px] font-semibold text-ink/50 truncate">
-                              {taken
-                                ? `Déjà accompagné par ${c.current_mentor_email}`
-                                : c.is_active
-                                  ? "Disponible pour un mentor"
-                                  : "Profil désactivé"}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            disabled={taken}
-                            onClick={() => {
-                              setSelectedChild(c);
-                              setStep(2);
-                            }}
-                            className="shrink-0 rounded-xl bg-ink px-3 py-1.5 text-xs font-bold text-white hover:bg-ink/90 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
-                          >
-                            Choisir
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </>
-            )}
-
-            {/* Étape 2 — choix du mentor */}
-            {step === 2 && (
-              <>
-                <div className="flex items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStep(1);
-                      setSelectedChild(null);
-                    }}
-                    className="text-xs font-bold text-ink/50 hover:text-ink transition-colors cursor-pointer"
-                  >
-                    ← Changer d'enfant
-                  </button>
-                  <p className="text-xs font-bold text-ink/70 truncate min-w-0">
-                    Enfant : {selectedChild?.name}
-                  </p>
-                </div>
-
-                <form onSubmit={handleSearchMentors} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={mentorQuery}
-                    onChange={(e) => setMentorQuery(e.target.value)}
-                    placeholder="Email, téléphone ou nom du mentor…"
-                    className="flex-1 min-w-0 bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
-                  />
-                  <button
-                    type="submit"
-                    disabled={searchingMentors || !mentorQuery.trim()}
-                    className="px-4 py-3 bg-ink hover:bg-ink/90 text-white rounded-2xl font-bold flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
-                  >
-                    {searchingMentors ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <Search className="size-4" />
-                    )}
-                    Chercher
-                  </button>
-                </form>
-
-                {mentorSearched && mentorResults.length === 0 && (
-                  <p className="text-sm font-semibold text-ink/50 py-3 text-center">
-                    Aucun compte trouvé pour cette recherche.
-                  </p>
-                )}
-                <ul className="space-y-2">
-                  {mentorResults.map((m) => {
-                    const banned = m.status === "suspended" || m.status === "banned";
-                    return (
-                      <li
-                        key={m.user_id}
-                        className={
-                          "flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 " +
-                          (banned
-                            ? "border-ink/5 bg-surface/50 opacity-60"
-                            : "border-ink/10 bg-surface")
-                        }
-                      >
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-ink truncate">{m.email}</p>
-                          <p className="text-[11px] font-semibold text-ink/50 truncate">
-                            {[m.display_name, m.phone && `Tél : ${m.phone}`]
-                              .filter(Boolean)
-                              .join(" · ") || "—"}{" "}
-                            · {m.active_assignments} assignation
-                            {m.active_assignments > 1 ? "s" : ""} active
-                            {m.status !== "active" && ` · ${m.status}`}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          disabled={banned}
-                          onClick={() => {
-                            setSelectedMentor(m);
-                            setStep(3);
-                          }}
-                          className="shrink-0 rounded-xl bg-ink px-3 py-1.5 text-xs font-bold text-white hover:bg-ink/90 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          Choisir
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </>
-            )}
-
-            {/* Étape 3 — confirmation de la relation Parent → Enfant → Mentor */}
-            {step === 3 && (
-              <>
-                <div className="rounded-2xl border border-ink/10 bg-surface p-4 space-y-2.5">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-black text-ink w-20 shrink-0">Parent</span>
-                    <span className="font-semibold text-ink/70 truncate min-w-0 flex-1">
-                      {selectedParent?.display_name
-                        ? `${selectedParent.display_name} (${selectedParent.email})`
-                        : selectedParent?.email}
-                      {selectedParent?.phone ? ` · Tél : ${selectedParent.phone}` : ""}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-black text-ink w-20 shrink-0">Enfant</span>
-                    <span className="font-semibold text-ink/70 truncate min-w-0 flex-1">
-                      {selectedChild?.name}
-                      {selectedChild?.age != null ? ` (${selectedChild.age} ans)` : ""}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-black text-ink w-20 shrink-0">Mentor</span>
-                    <span className="font-semibold text-ink/70 truncate min-w-0 flex-1">
-                      {selectedMentor?.display_name
-                        ? `${selectedMentor.display_name} (${selectedMentor.email})`
-                        : selectedMentor?.email}
-                      {selectedMentor?.phone ? ` · Tél : ${selectedMentor.phone}` : ""}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 pt-4 border-t border-ink/5">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStep(2);
-                      setSelectedMentor(null);
-                    }}
-                    className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-bold transition-colors cursor-pointer"
-                  >
-                    Retour
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isSubmitting}
-                    onClick={() => void handleAssign()}
-                    className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                  >
-                    {isSubmitting ? (
-                      <Loader2 className="size-5 animate-spin" />
-                    ) : (
-                      <UserPlus className="size-4" />
-                    )}
-                    <span>Assigner le mentor</span>
-                  </button>
-                </div>
-              </>
-            )}
           </div>
         )}
       </div>

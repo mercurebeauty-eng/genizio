@@ -17,6 +17,7 @@
 //
 // Serveur uniquement — jamais importé côté client (même pattern que paystack.server.ts).
 
+import { generateAccessCode } from "@/lib/access-codes";
 import { computeAccessPeriodWindow } from "@/lib/child-access";
 import { PALIER_CHILDREN } from "@/lib/child-profile-quota";
 import { PACK_SESSIONS } from "@/lib/pricing";
@@ -90,6 +91,9 @@ export async function applyPaystackEntitlement(
           updated_at: new Date().toISOString(),
         })
         .eq("id", metadata.order_id)
+        // CAS (audit vague B) : une commande annulée ne peut plus être
+        // confirmée par un webhook tardif.
+        .eq("status", "pending")
         .select("id")
         .single();
       if (error) throw new Error(`Erreur lors de la confirmation de la commande: ${error.message}`);
@@ -329,7 +333,7 @@ export async function applyPaystackEntitlement(
       const activeSeason = await getActiveSeason({ data: undefined });
       const codes = new Set<string>();
       while (codes.size < toCreate) {
-        codes.add(`GENIZIO-B2B-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
+        codes.add(generateAccessCode("GENIZIO-B2B"));
       }
       const tokens = Array.from(codes).map((code, i) => ({
         code,

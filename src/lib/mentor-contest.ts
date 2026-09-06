@@ -93,36 +93,32 @@ export async function hasValidatedChildWorkNearSession(
  * jamais en dessous de zéro. Idempotent par la transition atomique de
  * `processSessionContest` (une contestation = un seul passage ici).
  */
+/** Client minimal pour les écritures de compteurs : from + rpc atomiques. */
+export type CounterWriteClient = {
+  from: (table: string) => any;
+  rpc: (fn: string, args: Record<string, unknown>) => Promise<any>;
+};
+
 export async function refundSessionDebit(
-  db: { from: (table: string) => any },
+  db: CounterWriteClient,
   session: Pick<ContestedSession, "child_profile_id" | "funding" | "campaign_id">,
 ): Promise<void> {
+  // Remboursement ATOMIQUE (audit backend vague B) : decrement côté SQL sous
+  // verrou, garde sessions_used > 0 dans le RPC. Le pack expiré entre débit et
+  // contestation est aussi remboursé (l'ancien filtre status='active' perdait
+  // le crédit silencieusement — P3 de l'audit).
   if (session.funding === "pack") {
     const { data: pack } = await db
       .from("family_coverages")
-      .select("id, sessions_used")
+      .select("id")
       .eq("child_id", session.child_profile_id)
       .eq("source", "accompaniment_pack")
-      .eq("status", "active")
       .maybeSingle();
-    if (pack && (pack.sessions_used ?? 0) > 0) {
-      await db
-        .from("family_coverages")
-        .update({ sessions_used: (pack.sessions_used ?? 0) - 1 })
-        .eq("id", pack.id);
+    if (pack) {
+      await db.rpc("refund_session_credit", { p_source: "pack", p_id: pack.id });
     }
   } else if (session.funding === "campaign" && session.campaign_id) {
-    const { data: campaign } = await db
-      .from("campaigns")
-      .select("id, sessions_used")
-      .eq("id", session.campaign_id)
-      .maybeSingle();
-    if (campaign && (campaign.sessions_used ?? 0) > 0) {
-      await db
-        .from("campaigns")
-        .update({ sessions_used: (campaign.sessions_used ?? 0) - 1 })
-        .eq("id", session.campaign_id);
-    }
+    await db.rpc("refund_session_credit", { p_source: "campaign", p_id: session.campaign_id });
   }
 }
 
@@ -138,7 +134,7 @@ export async function refundSessionDebit(
  * et la contestation est REFUSÉE (throw) — anti-faille parent.
  */
 export async function processSessionContest(
-  db: { from: (table: string) => any },
+  db: CounterWriteClient,
   sessionId: string,
   userId: string,
   reason: ContestReason,

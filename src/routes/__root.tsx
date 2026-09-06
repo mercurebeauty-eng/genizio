@@ -205,13 +205,18 @@ function RootComponent() {
   const internal = isInternalTool(pathname);
 
   // Univers Mentor (décision #81) : data-mode sur <html> → le bloc
-  // :root[data-mode="mentor"] de styles.css rethème toute l'app (palette
-  // indigo/violet + fond de page). Client-only : le mode vit dans la session.
+  // :root[data-mode="mentor"] de styles.css rethème l'app (palette indigo/violet +
+  // fond de page). Client-only : le mode vit dans la session.
+  // Scoppé à la ROUTE (deux-modèles, 2026-09-06) : le violet n'habille que le
+  // portail /mentor — l'admin et le reste de l'app gardent la palette parent
+  // même quand le compte est en mode mentor (le mode session reste le pilote
+  // fonctionnel : onglets, accès, bascules).
   const { session } = useSession();
   const mentorMode = session?.user.user_metadata?.mode === "mentor";
+  const mentorTheme = mentorMode && pathname === "/mentor";
   useEffect(() => {
-    document.documentElement.dataset.mode = mentorMode ? "mentor" : "parent";
-  }, [mentorMode]);
+    document.documentElement.dataset.mode = mentorTheme ? "mentor" : "parent";
+  }, [mentorTheme]);
 
   return (
     <QueryClientProvider client={queryClient}>

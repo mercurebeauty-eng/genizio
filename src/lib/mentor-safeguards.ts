@@ -37,6 +37,14 @@
 
 export type MentorCategory = "pro" | "support";
 
+/** Défaut « pro » : les superviseurs historiques (pré-deux-modèles) étaient cliniques. */
+export const DEFAULT_MENTOR_CATEGORY: MentorCategory = "pro";
+
+/** Normalise la valeur lue en base (colonne category ajoutée en 20260906120000). */
+export function resolveMentorCategory(value: unknown): MentorCategory {
+  return value === "support" ? "support" : DEFAULT_MENTOR_CATEGORY;
+}
+
 export type MentorSafeguardStanding =
   | "good_standing"
   | "warning"

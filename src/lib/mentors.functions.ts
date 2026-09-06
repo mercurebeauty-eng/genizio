@@ -30,6 +30,7 @@ import { assertChildActor } from "@/lib/child-actor";
 import { logMentorAction } from "@/lib/mentor-actions";
 import { punctualityFromSessions } from "@/lib/mentor-scheduling";
 import { processSessionContest } from "@/lib/mentor-contest";
+import { DEFAULT_MENTOR_CATEGORY, resolveMentorCategory, type MentorCategory } from "@/lib/mentor-safeguards";
 
 // Motifs de contestation — ré-export depuis le cœur (mentor-contest.ts) pour les
 // UI (hub parent, notifications mentor) sans casser les imports existants.
@@ -282,18 +283,25 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
     // et défis de leurs enfants (progression). Même fenêtre « mois courant » des deux
     // côtés. Depuis la V3 (Confiance Mentor), la déclaration seule ne suffit plus :
     // seules les séances confirmées par le parent alimentent le score.
-    const { data: profiles } = await (supabaseAdmin as any)
+    // Lecture tolérante : si la colonne category n'existe pas encore (migration
+    // 20260906120000 pas appliquée), on retente sans elle plutôt que de perdre
+    // aussi les statuts et les scores.
+    let { data: profiles, error: profilesError } = await (supabaseAdmin as any)
       .from("mentor_profiles")
       .select("mentor_user_id, status, created_at, category")
       .in("mentor_user_id", mentorIds);
+    if (profilesError) {
+      const retry = await (supabaseAdmin as any)
+        .from("mentor_profiles")
+        .select("mentor_user_id, status, created_at")
+        .in("mentor_user_id", mentorIds);
+      profiles = retry.data;
+    }
     const statusMap = new Map<string, string>(
       (profiles ?? []).map((p: any) => [p.mentor_user_id as string, p.status as string]),
     );
-    const categoryMap = new Map<string, "pro" | "support">(
-      (profiles ?? []).map((p: any) => [
-        p.mentor_user_id as string,
-        (p.category === "support" ? "support" : "pro") as "pro" | "support",
-      ]),
+    const categoryMap = new Map<string, MentorCategory>(
+      (profiles ?? []).map((p: any) => [p.mentor_user_id as string, resolveMentorCategory(p.category)]),
     );
     // Date d'activation du profil — borne d'âge opérationnel avec la première
     // assignation (voir computeMentorOperationalAgeDays).
@@ -481,7 +489,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
       // + extra_mentors_quota de la campagne, borné 5 (même calcul que le trigger
       // check_mentor_quota et computeMentorQuota).
       const { createdAt } = info ?? { createdAt: null };
-      g.category = categoryMap.get(g.mentor_user_id) ?? "pro";
+      g.category = categoryMap.get(g.mentor_user_id) ?? DEFAULT_MENTOR_CATEGORY;
       let quota = 0;
       for (const child of g.children) {
         const ctx = child.campaign_id ? campaignRefs.get(child.campaign_id) : undefined;
@@ -651,7 +659,7 @@ export async function insertMentorAssignments(
   // d'assignation — le ban est structurel, pas une décision après coup.
   const { data: profile } = await (supabaseAdmin as any)
     .from("mentor_profiles")
-    .select("status")
+    .select("status, category")
     .eq("mentor_user_id", params.mentorUserId)
     .maybeSingle();
   const status = (profile?.status as string | undefined) ?? "active";
@@ -660,6 +668,13 @@ export async function insertMentorAssignments(
       status === "banned"
         ? "Ce mentor est banni — restaurez-le avant de l'assigner."
         : "Ce mentor est suspendu — restaurez-le avant de l'assigner.",
+    );
+  }
+  // Garde-fou deux modèles : un mentor de Soutien n'accompagne que par escouade
+  // (mentor_squads, 6 à 8 enfants) — jamais en 1-on-1 via la table `mentors`.
+  if (resolveMentorCategory(profile?.category) === "support") {
+    throw new Error(
+      "Ce mentor est un mentor de Soutien (Club du Samedi) : il est assigné par escouade de 6 à 8 enfants, pas enfant par enfant.",
     );
   }
 
@@ -805,6 +820,10 @@ export interface MentorSearchResult {
   status: string;
   /** Nombre d'assignations actives (removed_at IS NULL). */
   active_assignments: number;
+  /** Modèle du mentor — pilote les flux d'assignation autorisés (1-on-1 vs escouade). */
+  category: MentorCategory;
+  /** Quota effectif (computeMentorQuota) — aperçu avant assignation. */
+  quota: number;
 }
 
 // Recherche d'un mentor (n'importe quel compte Génizio) par email/téléphone/nom —
@@ -823,17 +842,23 @@ export const searchMentorsAdmin = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     const users = rows ?? [];
 
-    // Statut de confiance + assignations actives — une requête groupée chacun
-    // (borné par les 20 résultats et le quota 5 par mentor).
+    // Statut de confiance + catégorie + assignations actives — requêtes groupées
+    // (borné par les 20 résultats et le quota par mentor).
     const statusByUser = new Map<string, string>();
+    const categoryByUser = new Map<string, MentorCategory>();
+    const profileCreatedByUser = new Map<string, string>();
     const activeCountByUser = new Map<string, number>();
     if (users.length > 0) {
       const userIds = users.map((u) => u.user_id);
-      const { data: profiles } = await supabaseAdmin
+      const { data: profiles } = await (supabaseAdmin as any)
         .from("mentor_profiles")
-        .select("mentor_user_id, status")
+        .select("mentor_user_id, status, category, created_at")
         .in("mentor_user_id", userIds);
-      for (const p of profiles ?? []) statusByUser.set(p.mentor_user_id, p.status);
+      for (const p of profiles ?? []) {
+        statusByUser.set(p.mentor_user_id, p.status);
+        categoryByUser.set(p.mentor_user_id, resolveMentorCategory(p.category));
+        profileCreatedByUser.set(p.mentor_user_id, p.created_at);
+      }
 
       const { data: assignments } = await supabaseAdmin
         .from("mentors")
@@ -845,14 +870,23 @@ export const searchMentorsAdmin = createServerFn({ method: "GET" })
       }
     }
 
-    return users.map((u) => ({
-      user_id: u.user_id,
-      email: u.email,
-      phone: u.phone,
-      display_name: u.display_name,
-      status: statusByUser.get(u.user_id) ?? "active",
-      active_assignments: activeCountByUser.get(u.user_id) ?? 0,
-    }));
+    return users.map((u) => {
+      const category = categoryByUser.get(u.user_id) ?? DEFAULT_MENTOR_CATEGORY;
+      return {
+        user_id: u.user_id,
+        email: u.email,
+        phone: u.phone,
+        display_name: u.display_name,
+        status: statusByUser.get(u.user_id) ?? "active",
+        active_assignments: activeCountByUser.get(u.user_id) ?? 0,
+        category,
+        quota: computeMentorQuota({
+          referenceCreatedAt: profileCreatedByUser.get(u.user_id) ?? null,
+          category,
+          extraQuota: 0,
+        }),
+      };
+    });
   });
 
 const AssignMentorToChildInput = z.object({
@@ -911,8 +945,77 @@ export const assignMentorToChildAdmin = createServerFn({ method: "POST" })
 const AssignMentorToCampaignInput = z.object({
   campaignId: z.string().uuid(),
   mentorEmail: z.string().email(),
-  count: z.number().int().min(1).max(5).default(5),
+  /** Sélection EXPLICITE des enfants à confier — plus de « count » tronqué en silence. */
+  childIds: z.array(z.string().uuid()).min(1).max(20),
 });
+
+// Cohorte d'une campagne pour le multi-sélecteur : enfants inscrits + drapeau
+// « déjà accompagné » (non sélectionnable) + email du mentor actif le cas échéant.
+export interface CampaignCohortChild {
+  id: string;
+  name: string;
+  age: number | null;
+  already_mentored: boolean;
+  current_mentor_email: string | null;
+}
+
+export const listCampaignCohortAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => z.object({ campaignId: z.string().uuid() }).parse(input))
+  .handler(async ({ data }): Promise<CampaignCohortChild[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: enrollments } = await (supabaseAdmin as any)
+      .from("season_enrollments")
+      .select("child_id")
+      .eq("campaign_id", data.campaignId);
+    const cohortChildIds = [
+      ...new Set<string>((enrollments ?? []).map((e: any) => e.child_id as string)),
+    ];
+    if (cohortChildIds.length === 0) return [];
+
+    const [childrenRes, assignmentsRes] = await Promise.all([
+      supabaseAdmin
+        .from("child_profiles")
+        .select("id, name, age, is_active")
+        .in("id", cohortChildIds)
+        .order("name"),
+      supabaseAdmin
+        .from("mentors")
+        .select("child_profile_id, mentor_user_id")
+        .in("child_profile_id", cohortChildIds)
+        // Liens ACTIFS seulement : un enfant retiré de son mentor redevient
+        // assignable (sinon il restait marqué « déjà suivi » pour toujours).
+        .is("removed_at", null),
+    ]);
+    if (childrenRes.error) throw new Error(childrenRes.error.message);
+
+    const emailByMentor = new Map<string, string>();
+    const mentorIds = [
+      ...new Set((assignmentsRes.data ?? []).map((a: any) => a.mentor_user_id as string)),
+    ];
+    if (mentorIds.length > 0) {
+      const { data: mentors } = await supabaseAdmin
+        .from("parent_profiles")
+        .select("user_id, email")
+        .in("user_id", mentorIds);
+      for (const m of mentors ?? []) emailByMentor.set(m.user_id, m.email);
+    }
+    const mentoredByChild = new Map<string, string | null>();
+    for (const a of assignmentsRes.data ?? []) {
+      mentoredByChild.set(
+        a.child_profile_id,
+        emailByMentor.get(a.mentor_user_id) ?? null,
+      );
+    }
+
+    return (childrenRes.data ?? []).map((c: any) => ({
+      id: c.id as string,
+      name: c.name as string,
+      age: (c.age as number | null) ?? null,
+      already_mentored: mentoredByChild.has(c.id),
+      current_mentor_email: mentoredByChild.get(c.id) ?? null,
+    }));
+  });
 
 export const assignMentorToCampaignAdmin = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
@@ -942,6 +1045,19 @@ export const assignMentorToCampaignAdmin = createServerFn({ method: "POST" })
       throw new Error(`Aucun compte trouvé pour l'email: ${data.mentorEmail}`);
     }
 
+    // Modèle : le flux cohorte de campagne est un flux 1-on-1 → mentors Pro
+    // uniquement (les mentors de Soutien passent par les escouades).
+    const { data: mentorProfile } = await (supabaseAdmin as any)
+      .from("mentor_profiles")
+      .select("category")
+      .eq("mentor_user_id", mentor.user_id)
+      .maybeSingle();
+    if (resolveMentorCategory(mentorProfile?.category) === "support") {
+      throw new Error(
+        "Ce compte est un mentor de Soutien (Club du Samedi) : il ne reçoit pas d'enfants en 1-on-1 — constituez son escouade de 6 à 8 enfants.",
+      );
+    }
+
     const { data: enrollments } = await (supabaseAdmin as any)
       .from("season_enrollments")
       .select("child_id")
@@ -956,14 +1072,22 @@ export const assignMentorToCampaignAdmin = createServerFn({ method: "POST" })
     const { data: existingSup } = await (supabaseAdmin as any)
       .from("mentors")
       .select("child_profile_id")
-      .in("child_profile_id", cohortChildIds);
+      .in("child_profile_id", cohortChildIds)
+      // Même règle que la cohorte affichée : seuls les liens ACTIFS bloquent
+      // (un enfant retiré de son mentor peut être re-confié).
+      .is("removed_at", null);
     const alreadyMentored = new Set(
       (existingSup ?? []).map((s: any) => s.child_profile_id as string),
     );
-    const unmentoredChildIds = cohortChildIds.filter((id) => !alreadyMentored.has(id));
 
-    if (unmentoredChildIds.length === 0) {
-      throw new Error("Tous les enfants de cette campagne ont déjà un mentor.");
+    // Chaque enfant choisi doit appartenir à la cohorte ET être sans mentor.
+    const invalid = data.childIds.filter(
+      (id) => !cohortChildIds.includes(id) || alreadyMentored.has(id),
+    );
+    if (invalid.length > 0) {
+      throw new Error(
+        `${invalid.length} enfant(s) sélectionné(s) sont hors campagne ou déjà accompagnés — rechargez la liste.`,
+      );
     }
 
     // Pré-check informatif seulement — le trigger DB check_mentor_quota (migration
@@ -980,23 +1104,22 @@ export const assignMentorToCampaignAdmin = createServerFn({ method: "POST" })
       extraQuota: campaign.extra_mentors_quota,
     });
     const slotsLeft = Math.max(0, quota - currentCount);
-    const toAssign = Math.min(data.count, slotsLeft, unmentoredChildIds.length);
 
-    if (toAssign === 0) {
+    if (data.childIds.length > slotsLeft) {
       throw new Error(
-        `Le mentor ${data.mentorEmail} a atteint sa limite de ${quota} enfants. Contactez le support pour augmenter son quota.`,
+        `Quota dépassé : ${data.childIds.length} enfants sélectionnés pour ${slotsLeft} place(s) restante(s) sur ${quota} (mentor ${data.mentorEmail}).`,
       );
     }
 
     // Insertion centralisée — même point de passage que le chemin admin manuel.
     await insertMentorAssignments(supabaseAdmin, {
       mentorUserId: mentor.user_id,
-      childProfileIds: unmentoredChildIds.slice(0, toAssign),
+      childProfileIds: data.childIds,
       campaignId: data.campaignId,
       assignedBy: (context as any).claims?.sub ?? null,
     });
 
-    return { success: true, assignedCount: toAssign };
+    return { success: true, assignedCount: data.childIds.length };
   });
 
 // ── Système de confiance (V1, décision « score auto ») ─────────────────────────
@@ -1080,30 +1203,32 @@ export const declareSessionMentor = createServerFn({ method: "POST" })
     let funding: "pack" | "campaign" | "none" = "none";
     let campaignId: string | null = null;
 
+    // Débit ATOMIQUE du crédit de séance (audit backend vague B) : l'ancien
+    // read-then-write (sessions_used: lu+1) perdait des incrémentations sous
+    // concurrence → double-consommation silencieuse de séances PAYÉES. Le RPC
+    // consume_session_credit (migration 20260906140000) incrémente sous verrou
+    // de ligne avec le plafond dans le WHERE ; false = crédit épuisé/expiré.
     const nowIso = new Date().toISOString();
     const { data: pack } = await (supabaseAdmin as any)
       .from("family_coverages")
-      .select("id, sessions_used, sessions")
+      .select("id")
       .eq("child_id", data.childProfileId)
       .eq("source", "accompaniment_pack")
       .eq("status", "active")
       .gt("ends_at", nowIso)
       .maybeSingle();
-    if (pack && (pack.sessions_used ?? 0) < (pack.sessions ?? 0)) {
-      const { data: claimed } = await (supabaseAdmin as any)
-        .from("family_coverages")
-        .update({ sessions_used: (pack.sessions_used ?? 0) + 1 })
-        .eq("id", pack.id)
-        .lt("sessions_used", pack.sessions)
-        .select("id")
-        .maybeSingle();
+    if (pack) {
+      const { data: claimed } = await (supabaseAdmin as any).rpc("consume_session_credit", {
+        p_source: "pack",
+        p_id: pack.id,
+      });
       if (claimed) funding = "pack";
     }
 
     if (funding === "none") {
       const { data: enrollment } = await (supabaseAdmin as any)
         .from("season_enrollments")
-        .select("campaign_id, campaigns(id, sessions_target, sessions_used, start_date, end_date)")
+        .select("campaign_id, campaigns(id, start_date, end_date)")
         .eq("child_id", data.childProfileId)
         .not("campaign_id", "is", null)
         .order("enrolled_at", { ascending: false })
@@ -1111,8 +1236,6 @@ export const declareSessionMentor = createServerFn({ method: "POST" })
         .maybeSingle();
       const c = enrollment?.campaigns as {
         id: string;
-        sessions_target: number;
-        sessions_used: number;
         start_date: string | null;
         end_date: string | null;
       } | null;
@@ -1121,14 +1244,11 @@ export const declareSessionMentor = createServerFn({ method: "POST" })
         c.end_date &&
         new Date(c.start_date).getTime() <= Date.now() &&
         Date.now() <= new Date(c.end_date).getTime();
-      if (c && inWindow && (c.sessions_used ?? 0) < (c.sessions_target ?? 0)) {
-        const { data: claimed } = await (supabaseAdmin as any)
-          .from("campaigns")
-          .update({ sessions_used: (c.sessions_used ?? 0) + 1 })
-          .eq("id", c.id)
-          .lt("sessions_used", c.sessions_target)
-          .select("id")
-          .maybeSingle();
+      if (c && inWindow) {
+        const { data: claimed } = await (supabaseAdmin as any).rpc("consume_session_credit", {
+          p_source: "campaign",
+          p_id: c.id,
+        });
         if (claimed) {
           funding = "campaign";
           campaignId = c.id;
@@ -1459,6 +1579,60 @@ export const updateMentorStatusAdmin = createServerFn({ method: "POST" })
     return { success: true, status: data.status };
   });
 
+// ── Changement de modèle d'un mentor (deux-modèles) ─────────────────────────
+// L'admin bascule un mentor entre Pro (Clinique, 1-on-1 ≤ 5) et Soutien (Club,
+// escouades 6-8). Sans cette porte, aucun mentor n'aurait jamais pu devenir
+// « support » : tous les profils historiques naissent 'pro' par défaut, et le
+// bouton « Escouade » n'apparaît que sur les cartes Soutien.
+const UpdateMentorCategoryInput = z.object({
+  mentorUserId: z.string().uuid(),
+  category: z.enum(["pro", "support"]),
+});
+
+export const updateMentorCategoryAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => UpdateMentorCategoryInput.parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Garde-fou de cohérence : un mentor de Soutien n'a pas de suivi 1-on-1.
+    // S'il a encore des enfants assignés en 1-on-1, on refuse — l'admin doit les
+    // retirer d'abord (sinon ses liens resteraient actifs malgré le modèle club).
+    if (data.category === "support") {
+      const { count } = await (supabaseAdmin as any)
+        .from("mentors")
+        .select("id", { count: "exact", head: true })
+        .eq("mentor_user_id", data.mentorUserId)
+        .is("removed_at", null);
+      if ((count ?? 0) > 0) {
+        throw new Error(
+          `Ce mentor suit encore ${count} enfant(s) en 1-on-1 — retirez-les de sa carte avant de le basculer en mentor de Soutien.`,
+        );
+      }
+    }
+
+    // Upsert (même logique que updateMentorStatusAdmin).
+    const { data: existing } = await (supabaseAdmin as any)
+      .from("mentor_profiles")
+      .select("mentor_user_id")
+      .eq("mentor_user_id", data.mentorUserId)
+      .maybeSingle();
+    if (existing) {
+      const { error } = await (supabaseAdmin as any)
+        .from("mentor_profiles")
+        .update({ category: data.category })
+        .eq("mentor_user_id", data.mentorUserId);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await (supabaseAdmin as any)
+        .from("mentor_profiles")
+        .insert({ mentor_user_id: data.mentorUserId, status: "active", category: data.category });
+      if (error) throw new Error(error.message);
+    }
+
+    return { success: true, category: data.category };
+  });
+
 export const removeMentor = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
@@ -1550,23 +1724,54 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
       .is("removed_at", null);
     if (error) throw new Error(error.message);
 
+    // Deux modèles : la catégorie pilote l'UI du portail (onglet Club, modèle de
+    // rémunération affiché) ; l'escouade est réservée aux mentors de Soutien.
+    const { data: profile } = await (supabaseAdmin as any)
+      .from("mentor_profiles")
+      .select("status, category, created_at")
+      .eq("mentor_user_id", userId)
+      .maybeSingle();
+    const category = resolveMentorCategory(profile?.category);
+    const quota = computeMentorQuota({
+      referenceCreatedAt: (profile?.created_at as string | undefined) ?? null,
+      extraQuota: 0,
+      category,
+    });
+    const { data: activeSquads } = await (supabaseAdmin as any)
+      .from("mentor_squads")
+      .select("id, name")
+      .eq("mentor_user_id", userId)
+      .eq("status", "active");
+    const squadIds = (activeSquads ?? []).map((s: any) => s.id as string);
+    let squads: Array<{ id: string; name: string; memberCount: number }> = [];
+    if (squadIds.length > 0) {
+      const { data: squadMembers } = await (supabaseAdmin as any)
+        .from("mentor_squad_members")
+        .select("squad_id, child_profile_id")
+        .in("squad_id", squadIds)
+        .is("removed_at", null);
+      squads = (activeSquads ?? []).map((s: any) => ({
+        id: s.id as string,
+        name: s.name as string,
+        memberCount: (squadMembers ?? []).filter((m: any) => m.squad_id === s.id).length,
+      }));
+    }
+
     if (!assignments || assignments.length === 0) {
-      const { data: emptyProfile } = await (supabaseAdmin as any)
-        .from("mentor_profiles")
-        .select("status")
-        .eq("mentor_user_id", userId)
-        .maybeSingle();
       return {
         children: [],
         score: null,
         sessionsThisMonth: 0,
         expectedSessions: 0,
-        status: (emptyProfile?.status as string | undefined) ?? "active",
+        status: (profile?.status as string | undefined) ?? "active",
         points: 0,
         tier: "standard",
         badge: "none",
         pointsBonusPct: 0,
         pendingPayoutXof: 0,
+        category,
+        quota,
+        squads,
       };
     }
 
@@ -1633,11 +1838,6 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
 
     // Confiance Mentor (V3) — statut automatique (30 j glissants), palier de
     // confiance et solde de points : le mentor voit sa position et son statut.
-    const { data: profile } = await (supabaseAdmin as any)
-      .from("mentor_profiles")
-      .select("status")
-      .eq("mentor_user_id", userId)
-      .maybeSingle();
     const status = (profile?.status as string | undefined) ?? "active";
     const [rollingScore, points] = await Promise.all([
       computeRollingScore(supabaseAdmin as any, userId),
@@ -1718,6 +1918,9 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
         (sum: number, s: any) => sum + Number(s.payout_xof ?? 0),
         0,
       ),
+      category,
+      quota,
+      squads,
       children: assignments.map((a) => {
         const child = a.child_profiles as any;
         return {
@@ -1816,6 +2019,8 @@ const GenerateCodesInput = z.object({
   count: z.number().int().min(1).max(50).default(5),
   /** Nombre de jours de validité (null = jamais expiré). */
   validDays: z.number().int().min(1).max(365).optional(),
+  /** Modèle de mentor : le code active le profil dans cette catégorie. */
+  category: z.enum(["pro", "support"]).default("pro"),
 });
 
 export interface MentorActivationCodeRow {
@@ -1825,17 +2030,25 @@ export interface MentorActivationCodeRow {
   used_by_email: string | null;
   used_at: string | null;
   created_at: string;
+  category: MentorCategory;
 }
 
 // Alphabet sans caractères ambigus (ni 0/O, 1/I/L) — code tapé à la main.
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-async function generateMentorCode(): Promise<string> {
+// Le préfixe porte le modèle : MNT-PRO-* active un Superviseur Clinique,
+// MNT-CLUB-* un mentor de Soutien (la RPC recopie la catégorie vers le profil).
+const CODE_PREFIXES: Record<MentorCategory, string> = {
+  pro: "MNT-PRO-",
+  support: "MNT-CLUB-",
+};
+
+async function generateMentorCode(category: MentorCategory): Promise<string> {
   // Import dynamique (pattern du repo pour les modules serveur uniquement).
   const { randomBytes } = await import("node:crypto");
-  const bytes = randomBytes(8);
-  let code = "MNT-";
-  for (let i = 0; i < 8; i++) code += CODE_ALPHABET[bytes[i] % CODE_ALPHABET.length];
+  const bytes = randomBytes(6);
+  let code = CODE_PREFIXES[category];
+  for (let i = 0; i < 6; i++) code += CODE_ALPHABET[bytes[i] % CODE_ALPHABET.length];
   return code;
 }
 
@@ -1852,7 +2065,7 @@ export const generateMentorActivationCodesAdmin = createServerFn({ method: "POST
     // une fois avant d'abandonner.
     for (let attempt = 0; attempt < 3; attempt++) {
       const codes = await Promise.all(
-        Array.from({ length: data.count }, () => generateMentorCode()),
+        Array.from({ length: data.count }, () => generateMentorCode(data.category)),
       );
       const { data: inserted, error } = await (supabaseAdmin as any)
         .from("mentor_activation_codes")
@@ -1861,6 +2074,7 @@ export const generateMentorActivationCodesAdmin = createServerFn({ method: "POST
             code,
             created_by: (context as any).claims?.sub ?? null,
             valid_until: validUntil,
+            category: data.category,
           })),
         )
         .select("code, valid_until, created_at");
@@ -1875,15 +2089,25 @@ export const listMentorActivationCodesAdmin = createServerFn({ method: "GET" })
   .handler(async (): Promise<{ codes: MentorActivationCodeRow[]; total: number }> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [{ count }, { data: rows, error }] = await Promise.all([
-      supabaseAdmin.from("mentor_activation_codes").select("id", { count: "exact", head: true }),
-      (supabaseAdmin as any)
+    let { count } = await supabaseAdmin
+      .from("mentor_activation_codes")
+      .select("id", { count: "exact", head: true });
+    const { data: rows0, error } = await (supabaseAdmin as any)
+      .from("mentor_activation_codes")
+      .select("id, code, valid_until, used_by, used_at, created_at, category")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    let rows = rows0 as any[] | null;
+    if (error) {
+      // Tolérant si la colonne category n'existe pas encore (migration pas appliquée).
+      const retry = await (supabaseAdmin as any)
         .from("mentor_activation_codes")
         .select("id, code, valid_until, used_by, used_at, created_at")
         .order("created_at", { ascending: false })
-        .limit(50),
-    ]);
-    if (error) throw new Error(error.message);
+        .limit(50);
+      if (retry.error) throw new Error(retry.error.message);
+      rows = retry.data;
+    }
 
     // Email du compte activé via parent_profiles (Vague 1) — une requête groupée.
     const usedByUserIds = [
@@ -1910,6 +2134,7 @@ export const listMentorActivationCodesAdmin = createServerFn({ method: "GET" })
         used_by_email: r.used_by ? (emailById.get(r.used_by) ?? "Inconnu") : null,
         used_at: r.used_at ?? null,
         created_at: r.created_at,
+        category: resolveMentorCategory(r.category),
       })),
       total: count ?? 0,
     };
@@ -2180,19 +2405,44 @@ export const approveMentorSessionAdmin = createServerFn({ method: "POST" })
 
 export const markMentorSessionsPaidAdmin = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
-  .validator((input: unknown) => z.object({ mentorUserId: z.string().uuid() }).parse(input))
+  .validator((input: unknown) =>
+    z
+      .object({
+        mentorUserId: z.string().uuid(),
+        /** Référence du virement/retrait (Mobile Money, banque) — traçabilité (audit vague B). */
+        reference: z.string().min(3).max(120),
+        /** Séances précises ; à défaut, toutes les approved du mentor. */
+        sessionIds: z.array(z.string().uuid()).max(500).optional(),
+      })
+      .parse(input),
+  )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as any;
 
-    const { data: res, error } = await (supabaseAdmin as any)
+    let read = db
       .from("mentor_sessions")
-      .update({ status: "paid" })
+      .select("id, payout_xof")
       .eq("mentor_user_id", data.mentorUserId)
+      .eq("status", "approved");
+    if (data.sessionIds?.length) read = read.in("id", data.sessionIds);
+    const { data: approved, error: readErr } = await read;
+    if (readErr) throw new Error("Lecture des séances approuvées impossible.");
+    if (!approved?.length) return { success: true, paidCount: 0, totalXof: 0 };
+
+    const ids = approved.map((a: any) => a.id as string);
+    const totalXof = approved.reduce((sum: number, a: any) => sum + (a.payout_xof ?? 0), 0);
+
+    // CAS : approved → paid seulement (jamais double-paiement d'une ligne soldée).
+    const { data: res, error } = await db
+      .from("mentor_sessions")
+      .update({ status: "paid", paid_at: new Date().toISOString(), paid_reference: data.reference })
+      .in("id", ids)
       .eq("status", "approved")
       .select("id");
-    if (error) throw new Error(error.message);
+    if (error) throw new Error("Marquage du paiement impossible.");
 
-    return { success: true, paidCount: (res ?? []).length };
+    return { success: true, paidCount: (res ?? []).length, totalXof };
   });
 
 // ── Feedback famille (Vague C, V2) ─────────────────────────────────────────────

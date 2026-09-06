@@ -41,6 +41,22 @@ export function awaitServiceWorkerReady(
       new Error("Notifications push non supportées sur cet appareil ou navigateur."),
     );
   }
+
+  // Si aucun enregistrement n'est encore actif, déclencher l'enregistrement de /sw.js
+  if (
+    typeof navigator !== "undefined" &&
+    typeof navigator.serviceWorker?.getRegistration === "function"
+  ) {
+    navigator.serviceWorker
+      .getRegistration()
+      .then((reg) => {
+        if (!reg && typeof navigator.serviceWorker?.register === "function") {
+          navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
+        }
+      })
+      .catch(() => {});
+  }
+
   pending ??= Promise.race([
     navigator.serviceWorker.ready,
     new Promise<never>((_, reject) => {

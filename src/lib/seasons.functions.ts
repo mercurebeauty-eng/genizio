@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { generateAccessCode } from "@/lib/access-codes";
+import { requireRateLimit } from "@/lib/rate-limit.middleware";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { resolveSponsorshipPrice } from "@/lib/pricing";
@@ -218,7 +220,21 @@ export async function createSponsorshipTokenRecord(
     paymentConfirmed?: boolean;
   },
 ): Promise<SponsorshipToken> {
-  const code = `GENIZIO-PARRAIN-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  const code = generateAccessCode("GENIZIO-PARRAIN");
+
+  // Anti-farming du palier offert (audit vague A) : un seul code gratuit par
+  // email de parrain. Les codes payés (webhook Paystack) ne sont pas concernés.
+  if ((fields.paymentConfirmed ?? false) && fields.amountPaid <= 0) {
+    const { count } = await supabaseAdmin
+      .from("sponsorship_tokens")
+      .select("id", { count: "exact", head: true })
+      .eq("sponsor_email", fields.sponsorEmail.toLowerCase())
+      .eq("payment_confirmed", true)
+      .lte("amount_paid", 0);
+    if ((count ?? 0) >= 1) {
+      throw new Error("Un code de parrainage gratuit a déjà été généré pour cet email.");
+    }
+  }
 
   const activeSeason = await fetchActiveSeasonFromDb(supabaseAdmin);
 
@@ -253,6 +269,10 @@ export async function createSponsorshipTokenRecord(
 }
 
 export const createSponsorshipToken = createServerFn({ method: "POST" })
+  // Audit sécurité (vague A) : endpoint public sans limite = mint illimité de
+  // codes gratuits (les 3 premiers mois offerts). Rate-limit + anti-farming
+  // (un seul code gratuit par email de parrain, vérifié à l'insertion).
+  .middleware([requireRateLimit])
   .validator((input: unknown) =>
     z
       .object({

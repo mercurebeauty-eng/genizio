@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireRateLimit } from "@/lib/rate-limit.middleware";
 import { z } from "zod";
 
 export interface EducatorLookupResult {
@@ -24,7 +25,9 @@ const LookupQuerySchema = z.string().min(2).max(100);
  * Protège la vie privée : ne renvoie que l'identité professionnelle de validation.
  */
 export const lookupEducator = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  // Audit sécurité (vague A) : le lookup par handle/code classe est un vecteur
+  // d'énumération — correspondance EXACTE via RPC + rate-limit.
+  .middleware([requireSupabaseAuth, requireRateLimit])
   .validator((query: string) => LookupQuerySchema.parse(query))
   .handler(async ({ data: rawQuery }): Promise<EducatorLookupResult | null> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -36,11 +39,13 @@ export const lookupEducator = createServerFn({ method: "GET" })
     const lowerQuery = cleanQuery.toLowerCase();
     const upperQuery = cleanQuery.toUpperCase();
 
-    // 1. Recherche directe dans educator_profiles par handle ou code classe
+    // 1. Recherche directe dans educator_profiles par handle ou code classe —
+    // correspondance EXACTE (RPC SECURITY DEFINER, migration 20260906130000) :
+    // l'ancien ilike partiel permettait d'énumérer les éducateurs par préfixe.
     const { data: profile } = await db
       .from("educator_profiles")
       .select("*")
-      .or(`handle.ilike.${lowerQuery},class_code.ilike.${upperQuery}`)
+      .or(`handle.eq.${lowerQuery},class_code.eq.${upperQuery}`)
       .limit(1)
       .maybeSingle();
 

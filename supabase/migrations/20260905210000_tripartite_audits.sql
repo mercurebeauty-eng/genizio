@@ -41,8 +41,10 @@ ON public.mentor_decision_proposals (status, created_at DESC) WHERE status = 'pr
 ALTER TABLE public.tripartite_quarterly_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mentor_decision_proposals ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Service role full access to tripartite_quarterly_reports" ON public.tripartite_quarterly_reports;
 CREATE POLICY "Service role full access to tripartite_quarterly_reports"
 ON public.tripartite_quarterly_reports FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Service role full access to mentor_decision_proposals" ON public.mentor_decision_proposals;
 CREATE POLICY "Service role full access to mentor_decision_proposals"
 ON public.mentor_decision_proposals FOR ALL TO service_role USING (true) WITH CHECK (true);

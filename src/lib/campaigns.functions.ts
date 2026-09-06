@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { generateAccessCode } from "@/lib/access-codes";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { listAllUsers } from "@/integrations/supabase/admin-users";
@@ -321,7 +322,7 @@ export const generateCampaignTokensAdmin = createServerFn({ method: "POST" })
     // ONG serait un vrai incident, pas un détail.
     const codes = new Set<string>();
     while (codes.size < data.count) {
-      codes.add(`GENIZIO-B2B-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
+      codes.add(generateAccessCode("GENIZIO-B2B"));
     }
 
     const tokens = Array.from(codes).map((code) => ({

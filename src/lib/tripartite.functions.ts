@@ -19,6 +19,7 @@ import {
 import type {
   ChildTripartiteEvaluation,
 } from "@/lib/mentor-safeguards";
+import { currentAcademicYear } from "@/lib/academic-year";
 
 const QuarterSchema = z.string().regex(/^\d{4}-T[1-4]$/, "période attendue : YYYY-Tn");
 
@@ -281,12 +282,55 @@ export const getLatestTripartiteReportAdmin = createServerFn({ method: "GET" })
 const RecordAcademicObservationSchema = z.object({
   childId: z.string().uuid(),
   term: z.number().int().min(1).max(3),
-  academicYear: z.string().default("2026-2027"),
+  academicYear: z.string().regex(/^\d{4}-\d{4}$/).optional(),
   previousAverage: z.number().min(0).max(20),
   currentAverage: z.number().min(0).max(20),
   classAverage: z.number().min(0).max(20).optional(),
   teacherReportNotes: z.string().max(1000).optional(),
 });
+
+/**
+ * Un éducateur n'observe les notes d'UN enfant que s'il a un lien légitime avec
+ * lui : même école liée (child_schools actif) OU délégation active envers lui.
+ * Sans ce garde, n'importe quel compte « éducateur » pouvait écrire/lire les
+ * notes de n'importe quel enfant (IDOR, audit backend vague A).
+ */
+async function assertEducatorMayObserveChild(
+  db: any,
+  userId: string,
+  childId: string,
+): Promise<{ schoolId: string | null }> {
+  const { data: educatorProfile } = await db
+    .from("educator_profiles")
+    .select("school_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!educatorProfile) {
+    throw new Error("Profil éducateur requis pour saisir les observations académiques.");
+  }
+
+  if (educatorProfile.school_id) {
+    const { data: link } = await db
+      .from("child_schools")
+      .select("child_id")
+      .eq("child_id", childId)
+      .eq("school_id", educatorProfile.school_id)
+      .eq("status", "active")
+      .maybeSingle();
+    if (link) return { schoolId: educatorProfile.school_id };
+  }
+
+  const { data: delegation } = await db
+    .from("child_delegations")
+    .select("id")
+    .eq("child_id", childId)
+    .eq("beneficiary_user_id", userId)
+    .eq("status", "active")
+    .maybeSingle();
+  if (delegation) return { schoolId: educatorProfile.school_id ?? null };
+
+  throw new Error("Cet élève n'est rattaché ni à votre établissement ni à une de vos délégations.");
+}
 
 export const recordChildAcademicObservationEducator = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -296,22 +340,18 @@ export const recordChildAcademicObservationEducator = createServerFn({ method: "
     const db = supabaseAdmin as any;
     const userId = (context as any).claims?.sub || (context as any).user?.id;
 
-    // Récupération de l'école de l'éducateur si liée
-    const { data: educatorProfile } = await db
-      .from("educator_profiles")
-      .select("school_id")
-      .eq("user_id", userId)
-      .maybeSingle();
+    // Garde IDOR (audit vague A) : lien école ou délégation avec CET enfant.
+    const { schoolId } = await assertEducatorMayObserveChild(db, userId, data.childId);
 
     const { data: row, error } = await db
       .from("child_academic_observations")
       .upsert(
         {
           child_id: data.childId,
-          school_id: educatorProfile?.school_id ?? null,
+          school_id: schoolId,
           educator_user_id: userId,
           term: data.term,
-          academic_year: data.academicYear,
+          academic_year: data.academicYear ?? currentAcademicYear(),
           previous_average: data.previousAverage,
           current_average: data.currentAverage,
           class_average: data.classAverage ?? null,
@@ -333,9 +373,13 @@ export const recordChildAcademicObservationEducator = createServerFn({ method: "
 export const listChildAcademicObservationsEducator = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => z.object({ childId: z.string().uuid() }).parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as any;
+    const userId = (context as any).claims?.sub || (context as any).user?.id;
+    // Même garde qu'en écriture : pas de lecture des notes d'un inconnu.
+    await assertEducatorMayObserveChild(db, userId, data.childId);
+
     const { data: rows, error } = await db
       .from("child_academic_observations")
       .select("*")
@@ -343,8 +387,8 @@ export const listChildAcademicObservationsEducator = createServerFn({ method: "G
       .order("term", { ascending: true });
 
     if (error) {
-      console.error("listChildAcademicObservationsEducator failed:", error);
-      return [];
+      // Un échec de lecture ne doit pas se déguiser en « aucune observation ».
+      throw new Error("Lecture des observations académiques impossible.");
     }
 
     return rows ?? [];
@@ -352,3 +396,37 @@ export const listChildAcademicObservationsEducator = createServerFn({ method: "G
 
 export type { MentorDecisionProposalKind };
 
+
+// ── Réconciliation des crédits (audit backend vague B) ──────────────────────
+// Lecture seule de la vue v_entitlement_drift : les packs dont le compteur
+// sessions_used diverge du nombre réel de séances financées. Les courses
+// read-then-write sont corrigées (20260906140000) ; cette vue rend la dérive
+// résiduelle (historique) mesurable par l'Admin OS.
+
+export const getEntitlementDriftAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(async (): Promise<
+    Array<{
+      coverageId: string;
+      childId: string;
+      sessions: number;
+      sessionsUsed: number;
+      actualSessions: number;
+      drift: number;
+    }>
+  > => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await (supabaseAdmin as any)
+      .from("v_entitlement_drift")
+      .select("coverage_id, child_id, sessions, sessions_used, actual_pack_sessions, drift_sessions")
+      .limit(200);
+    if (error) throw new Error("Lecture de la réconciliation impossible.");
+    return (data ?? []).map((r: any) => ({
+      coverageId: r.coverage_id,
+      childId: r.child_id,
+      sessions: r.sessions,
+      sessionsUsed: r.sessions_used,
+      actualSessions: r.actual_pack_sessions,
+      drift: r.drift_sessions,
+    }));
+  });

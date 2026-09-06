@@ -1100,25 +1100,147 @@ export interface AiProviderStatus {
   anthropicConfigured: boolean;
   geminiConfigured: boolean;
   glmConfigured: boolean;
+  qwenConfigured: boolean;
 }
 
 // Simple check de présence des clés API (jamais leur valeur) — pour que l'admin
-// voie immédiatement si DEEPSEEK_API_KEY, GLM_API_KEY, etc. sont bien réglées sur
+// voie immédiatement si DEEPSEEK_API_KEY, GLM_API_KEY, QWEN_API_KEY, etc. sont bien réglées sur
 // cet environnement, sans avoir à ouvrir .env/Vercel.
 export const getAiProviderStatusAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async (): Promise<AiProviderStatus> => {
+    const glmOk = !!(
+      process.env.GLM_API_KEY ||
+      process.env.ZHIPU_API_KEY ||
+      process.env.ZHIPUAI_API_KEY ||
+      process.env.BIGMODEL_API_KEY ||
+      process.env.BAI_API_KEY
+    );
+    const qwenOk = !!(
+      process.env.QWEN_API_KEY ||
+      process.env.DASHSCOPE_API_KEY ||
+      glmOk // api.b.ai partage la clé pour Qwen et GLM
+    );
+
     return {
       deepseekConfigured: !!process.env.DEEPSEEK_API_KEY,
       anthropicConfigured: !!process.env.ANTHROPIC_API_KEY,
       geminiConfigured: !!process.env.GEMINI_API_KEY,
-      glmConfigured: !!(
-        process.env.GLM_API_KEY ||
-        process.env.ZHIPU_API_KEY ||
-        process.env.ZHIPUAI_API_KEY ||
-        process.env.BIGMODEL_API_KEY
-      ),
+      glmConfigured: glmOk,
+      qwenConfigured: qwenOk,
     };
+  });
+
+export type ChallengeModelId = "deepseek-v4-flash" | "glm-5.3-flash" | "qwen3.8-flash";
+
+export interface ChallengeModelOption {
+  id: ChallengeModelId;
+  label: string;
+  provider: string;
+  description: string;
+  inputPricePerM: number;
+  outputPricePerM: number;
+  color: string;
+}
+
+export const CHALLENGE_MODEL_OPTIONS: ChallengeModelOption[] = [
+  {
+    id: "deepseek-v4-flash",
+    label: "DeepSeek V4 Flash",
+    provider: "DeepSeek (OpenRouter)",
+    description: "Modèle historique économique et rapide",
+    inputPricePerM: 0.0808,
+    outputPricePerM: 0.1616,
+    color: "sky",
+  },
+  {
+    id: "glm-5.3-flash",
+    label: "GLM 5.3 Flash",
+    provider: "Zhipu AI (OpenRouter / api.b.ai)",
+    description: "Haute réactivité & multimodalité",
+    inputPricePerM: 0.06,
+    outputPricePerM: 0.4,
+    color: "emerald",
+  },
+  {
+    id: "qwen3.8-flash",
+    label: "Qwen 3.8 Flash",
+    provider: "Alibaba Qwen (OpenRouter / api.b.ai)",
+    description: "Précision de raisonnement & vitesse d'exécution",
+    inputPricePerM: 0.0481,
+    outputPricePerM: 0.193,
+    color: "purple",
+  },
+];
+
+/**
+ * Retourne la liste des options de modèle enrichie des tarifs en direct OpenRouter si disponibles.
+ */
+export function getChallengeModelOptions(
+  livePricing?: import("./openrouter-pricing.types").LiveOpenRouterPricing | null,
+): ChallengeModelOption[] {
+  return [
+    {
+      id: "deepseek-v4-flash",
+      label: "DeepSeek V4 Flash",
+      provider: "DeepSeek (OpenRouter)",
+      description: "Modèle historique économique et rapide",
+      inputPricePerM: livePricing?.deepseekChat?.inputPerM ?? 0.0808,
+      outputPricePerM: livePricing?.deepseekChat?.outputPerM ?? 0.1616,
+      color: "sky",
+    },
+    {
+      id: "glm-5.3-flash",
+      label: "GLM 5.3 Flash",
+      provider: "Zhipu AI (OpenRouter / api.b.ai)",
+      description: "Haute réactivité & multimodalité",
+      inputPricePerM: livePricing?.glmFlash?.inputPerM ?? 0.06,
+      outputPricePerM: livePricing?.glmFlash?.outputPerM ?? 0.4,
+      color: "emerald",
+    },
+    {
+      id: "qwen3.8-flash",
+      label: "Qwen 3.8 Flash",
+      provider: "Alibaba Qwen (OpenRouter / api.b.ai)",
+      description: "Précision de raisonnement & vitesse d'exécution",
+      inputPricePerM: livePricing?.qwenFlash?.inputPerM ?? 0.0481,
+      outputPricePerM: livePricing?.qwenFlash?.outputPerM ?? 0.193,
+      color: "purple",
+    },
+  ];
+}
+
+export interface NayaModelRoutingSettings {
+  challengeModel: ChallengeModelId;
+  fallbackEnabled: boolean;
+  updatedAt: string | null;
+  updatedBy: string | null;
+}
+
+export const getNayaModelRoutingAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(async (): Promise<NayaModelRoutingSettings> => {
+    const { getNayaModelRoutingSettings } = await import("./naya-routing.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    return getNayaModelRoutingSettings(supabaseAdmin);
+  });
+
+export const updateNayaModelRoutingAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((data: unknown) =>
+    z
+      .object({
+        challengeModel: z.enum(["deepseek-v4-flash", "glm-5.3-flash", "qwen3.8-flash"]),
+        fallbackEnabled: z.boolean().optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }): Promise<NayaModelRoutingSettings> => {
+    const { updateNayaModelRoutingSettings } = await import("./naya-routing.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const updatedBy =
+      (context as any).claims?.email || (context as any).user?.email || "admin";
+    return updateNayaModelRoutingSettings(supabaseAdmin, data, updatedBy);
   });
 
 export interface ProgressionDomainHealth {
@@ -1221,6 +1343,11 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
         supabaseAdmin
           .from("generation_audits")
           .select("kind, verdict, violations, semantic_checked, regenerated"),
+        supabaseAdmin
+          .from("admin_naya_settings")
+          .select("challenge_model")
+          .eq("id", "singleton")
+          .maybeSingle(),
       ]);
 
     if (genRes.error) throw new Error(genRes.error.message);
@@ -1238,14 +1365,27 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
     const hypothesesCycles = hypoRes.count ?? 0;
     const recommendationsCount = recoRes.count ?? 0;
 
-    const telemetry = calculateNayaTelemetry({
-      challengesGenerated,
-      challengesStarted,
-      challengesCompleted,
-      photoProofCompleted,
-      hypothesesCycles,
-      recommendationsCount,
+    const { getLiveOpenRouterPricing } = await import("@/lib/openrouter-pricing.server");
+    const livePricing = await getLiveOpenRouterPricing().catch((err) => {
+      console.warn("[admin-os] Impossible de récupérer les tarifs OpenRouter en direct, utilisation du repli:", err);
+      return null;
     });
+
+    const activeChallengeModel =
+      (nayaSettingsRes?.data?.challenge_model as any) || "deepseek-v4-flash";
+
+    const telemetry = calculateNayaTelemetry(
+      {
+        challengesGenerated,
+        challengesStarted,
+        challengesCompleted,
+        photoProofCompleted,
+        hypothesesCycles,
+        recommendationsCount,
+        activeChallengeModel,
+      },
+      livePricing,
+    );
 
     // Remplace l'état vide de calculateNayaTelemetry par les audits réels du Loup.
     telemetry.wolf = calculateNayaWolfTelemetry(
@@ -1261,6 +1401,13 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
     );
 
     return telemetry;
+  });
+
+export const refreshAiModelPricingAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .handler(async () => {
+    const { getLiveOpenRouterPricing } = await import("@/lib/openrouter-pricing.server");
+    return await getLiveOpenRouterPricing(true);
   });
 
 const CommercePageInput = z.object({

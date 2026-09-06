@@ -16,12 +16,16 @@ import {
   getCommercePassportsDataAdmin,
   getAiProviderStatusAdmin,
   getProgressionHealthAdmin,
+  getNayaModelRoutingAdmin,
+  updateNayaModelRoutingAdmin,
   ExecutiveKPIs,
   ParentBIRC,
   TalentCityStatsResponse,
   type PaginatedCommerceResponse,
   AiProviderStatus,
   ProgressionHealthResponse,
+  type NayaModelRoutingSettings,
+  type ChallengeModelId,
 } from "@/lib/admin-os.functions";
 import { NayaTelemetryResponse } from "@/lib/naya-telemetry";
 import {
@@ -94,6 +98,7 @@ function AdminIndexPage() {
   const [loupConstitution, setLoupConstitution] = useState<ConstitutionSuggestionsResponse | null>(
     null,
   );
+  const [nayaRouting, setNayaRouting] = useState<NayaModelRoutingSettings | null>(null);
   const [decidingRuleKeys, setDecidingRuleKeys] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -116,6 +121,8 @@ function AdminIndexPage() {
   const getAiProviderStatusFn = useServerFn(getAiProviderStatusAdmin);
   const getProgressionHealthFn = useServerFn(getProgressionHealthAdmin);
   const getCommerceDataFn = useServerFn(getCommercePassportsDataAdmin);
+  const getNayaRoutingFn = useServerFn(getNayaModelRoutingAdmin);
+  const updateNayaRoutingFn = useServerFn(updateNayaModelRoutingAdmin);
   const getPendingPaymentsFn = useServerFn(getPaymentsPendingCountAdmin);
   const getSafetyPendingFn = useServerFn(getSafeguardingPendingCountAdmin);
   const toggleUnlockFn = useServerFn(togglePassportUnlock);
@@ -134,7 +141,7 @@ function AdminIndexPage() {
       : {};
 
     try {
-      const [execData, talentData, nayaData, aiStatus, progressionData, commData] =
+      const [execData, talentData, nayaData, aiStatus, progressionData, commData, routingData] =
         await Promise.all([
           getExecutiveKPIsFn({ data: { page: execPage, pageSize: 20 }, ...opts }).catch((err) => {
             console.error("execData error", err);
@@ -163,6 +170,10 @@ function AdminIndexPage() {
             console.error("commData error", err);
             return null;
           }),
+          getNayaRoutingFn({ data: undefined, ...opts }).catch((err) => {
+            console.error("nayaRouting error", err);
+            return null;
+          }),
         ]);
       if (execData) {
         setKpis(execData.kpis);
@@ -179,6 +190,7 @@ function AdminIndexPage() {
         setCommerceTotal(commData.total ?? 0);
         setCommerceTotalPages(commData.totalPages ?? 1);
       }
+      if (routingData) setNayaRouting(routingData);
 
       // Comptage des paiements en attente (badge de la carte « Paiements & Accès »).
       const pending = await getPendingPaymentsFn({ data: undefined, ...opts }).catch(() => null);
@@ -209,6 +221,26 @@ function AdminIndexPage() {
     } finally {
       setLoading(false);
       setIsRefreshing(false);
+    }
+  };
+
+  const handleUpdateNayaRouting = async (newSettings: {
+    challengeModel: ChallengeModelId;
+    fallbackEnabled?: boolean;
+  }) => {
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+    try {
+      const updated = await updateNayaRoutingFn({ data: newSettings, ...opts });
+      if (updated) {
+        setNayaRouting(updated);
+        toast.success(`Moteur de défis Naya : ${updated.challengeModel}`);
+      }
+    } catch (err: any) {
+      console.error("Erreur mise à jour modèle Naya:", err);
+      toast.error("Échec de la mise à jour du modèle Naya.");
+      throw err;
     }
   };
 
@@ -520,6 +552,8 @@ function AdminIndexPage() {
                 onRefresh={() => loadData(false)}
                 constitution={loupConstitution}
                 onDataChanged={() => void loadData(false)}
+                nayaRoutingSettings={nayaRouting}
+                onUpdateNayaRouting={handleUpdateNayaRouting}
               />
             )}
 
