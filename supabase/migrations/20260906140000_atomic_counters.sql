@@ -19,25 +19,26 @@ LANGUAGE sql
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT CASE
-    WHEN p_source = 'pack' THEN EXISTS (
-      UPDATE public.family_coverages
-      SET sessions_used = sessions_used + 1
-      WHERE id = p_id
-        AND status = 'active'
-        AND ends_at > now()
-        AND sessions_used < sessions
-      RETURNING 1
-    )
-    WHEN p_source = 'campaign' THEN EXISTS (
-      UPDATE public.campaigns
-      SET sessions_used = sessions_used + 1
-      WHERE id = p_id
-        AND sessions_used < sessions_target
-      RETURNING 1
-    )
-    ELSE false
-  END;
+  -- EXISTS(UPDATE…) interdit en Postgres : l'UPDATE passe par un CTE RETURNING.
+  WITH claim AS (
+    UPDATE public.family_coverages
+    SET sessions_used = sessions_used + 1
+    WHERE p_source = 'pack'
+      AND id = p_id
+      AND status = 'active'
+      AND ends_at > now()
+      AND sessions_used < sessions
+    RETURNING 1
+  ),
+  claim_campaign AS (
+    UPDATE public.campaigns
+    SET sessions_used = sessions_used + 1
+    WHERE p_source = 'campaign'
+      AND id = p_id
+      AND sessions_used < sessions_target
+    RETURNING 1
+  )
+  SELECT (EXISTS (SELECT 1 FROM claim)) OR (EXISTS (SELECT 1 FROM claim_campaign));
 $$;
 
 -- ── 2. refund_session_credit : remboursement atomique (litige) ──────────────
@@ -47,21 +48,21 @@ LANGUAGE sql
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT CASE
-    WHEN p_source = 'pack' THEN EXISTS (
-      UPDATE public.family_coverages
-      SET sessions_used = sessions_used - 1
-      WHERE id = p_id AND sessions_used > 0
-      RETURNING 1
-    )
-    WHEN p_source = 'campaign' THEN EXISTS (
-      UPDATE public.campaigns
-      SET sessions_used = sessions_used - 1
-      WHERE id = p_id AND sessions_used > 0
-      RETURNING 1
-    )
-    ELSE false
-  END;
+  WITH claim AS (
+    UPDATE public.family_coverages
+    SET sessions_used = sessions_used - 1
+    WHERE p_source = 'pack'
+      AND id = p_id AND sessions_used > 0
+    RETURNING 1
+  ),
+  claim_campaign AS (
+    UPDATE public.campaigns
+    SET sessions_used = sessions_used - 1
+    WHERE p_source = 'campaign'
+      AND id = p_id AND sessions_used > 0
+    RETURNING 1
+  )
+  SELECT (EXISTS (SELECT 1 FROM claim)) OR (EXISTS (SELECT 1 FROM claim_campaign));
 $$;
 
 -- ── 3. increment_child_xp : XP atomique (la logique streak reste JS) ────────
