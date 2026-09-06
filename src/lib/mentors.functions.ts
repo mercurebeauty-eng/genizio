@@ -1197,30 +1197,32 @@ export const declareSessionMentor = createServerFn({ method: "POST" })
     let funding: "pack" | "campaign" | "none" = "none";
     let campaignId: string | null = null;
 
+    // Débit ATOMIQUE du crédit de séance (audit backend vague B) : l'ancien
+    // read-then-write (sessions_used: lu+1) perdait des incrémentations sous
+    // concurrence → double-consommation silencieuse de séances PAYÉES. Le RPC
+    // consume_session_credit (migration 20260906140000) incrémente sous verrou
+    // de ligne avec le plafond dans le WHERE ; false = crédit épuisé/expiré.
     const nowIso = new Date().toISOString();
     const { data: pack } = await (supabaseAdmin as any)
       .from("family_coverages")
-      .select("id, sessions_used, sessions")
+      .select("id")
       .eq("child_id", data.childProfileId)
       .eq("source", "accompaniment_pack")
       .eq("status", "active")
       .gt("ends_at", nowIso)
       .maybeSingle();
-    if (pack && (pack.sessions_used ?? 0) < (pack.sessions ?? 0)) {
-      const { data: claimed } = await (supabaseAdmin as any)
-        .from("family_coverages")
-        .update({ sessions_used: (pack.sessions_used ?? 0) + 1 })
-        .eq("id", pack.id)
-        .lt("sessions_used", pack.sessions)
-        .select("id")
-        .maybeSingle();
+    if (pack) {
+      const { data: claimed } = await (supabaseAdmin as any).rpc("consume_session_credit", {
+        p_source: "pack",
+        p_id: pack.id,
+      });
       if (claimed) funding = "pack";
     }
 
     if (funding === "none") {
       const { data: enrollment } = await (supabaseAdmin as any)
         .from("season_enrollments")
-        .select("campaign_id, campaigns(id, sessions_target, sessions_used, start_date, end_date)")
+        .select("campaign_id, campaigns(id, start_date, end_date)")
         .eq("child_id", data.childProfileId)
         .not("campaign_id", "is", null)
         .order("enrolled_at", { ascending: false })
@@ -1228,8 +1230,6 @@ export const declareSessionMentor = createServerFn({ method: "POST" })
         .maybeSingle();
       const c = enrollment?.campaigns as {
         id: string;
-        sessions_target: number;
-        sessions_used: number;
         start_date: string | null;
         end_date: string | null;
       } | null;
@@ -1238,14 +1238,11 @@ export const declareSessionMentor = createServerFn({ method: "POST" })
         c.end_date &&
         new Date(c.start_date).getTime() <= Date.now() &&
         Date.now() <= new Date(c.end_date).getTime();
-      if (c && inWindow && (c.sessions_used ?? 0) < (c.sessions_target ?? 0)) {
-        const { data: claimed } = await (supabaseAdmin as any)
-          .from("campaigns")
-          .update({ sessions_used: (c.sessions_used ?? 0) + 1 })
-          .eq("id", c.id)
-          .lt("sessions_used", c.sessions_target)
-          .select("id")
-          .maybeSingle();
+      if (c && inWindow) {
+        const { data: claimed } = await (supabaseAdmin as any).rpc("consume_session_credit", {
+          p_source: "campaign",
+          p_id: c.id,
+        });
         if (claimed) {
           funding = "campaign";
           campaignId = c.id;

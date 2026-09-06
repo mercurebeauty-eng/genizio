@@ -3262,17 +3262,6 @@ Réponds STRICTEMENT en JSON valide avec ce format :
     }
   }
 
-  if (Object.keys(deltas).length > 0) {
-    // Atomic increment (row-locked, see increment_child_talents) instead of a
-    // client-side read-modify-write, so two near-simultaneous validations for
-    // the same child can't silently drop one set of points.
-    const { error: talentsError } = await db.rpc("increment_child_talents", {
-      p_child_id: challenge.child_profiles.id,
-      p_deltas: deltas,
-    });
-    if (talentsError) throw new Error(talentsError.message);
-  }
-
   const relevant = Object.keys(deltas).length > 0;
 
   if (!relevant) {
@@ -3340,15 +3329,43 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       target_intelligences: intelligenceKeys,
     };
 
+    // CAS (audit backend vague B) : la complétion n'est écrite que si le défi
+    // n'est PAS déjà completed. Un double-clic / retry client ne peut plus
+    // ré-attribuer talents+XP+badge sur un défi terminé (le trou P1 : les
+    // awards tournaient AVANT toute garde de statut).
     const { data: updated, error } = await db
       .from("challenges")
       .update(patch)
       .eq("id", id)
+      .neq("status", "completed")
       .select("*")
-      .single();
+      .maybeSingle();
 
     if (error) throw new Error(error.message);
+    if (!updated) {
+      // Déjà complété entre-temps (double-clic, retry client) : on renvoie
+      // l'état courant en base, AUCUN award rejoué.
+      const { data: current } = await db.from("challenges").select("*").eq("id", id).maybeSingle();
+      return {
+        challenge: current ?? challenge,
+        observations,
+        awarded_points: awarded,
+        imageAnalyzed,
+        relevant,
+        levelUp: null,
+        badgeUnlocked: null,
+      };
+    }
     updatedChallenge = updated;
+
+    // Increments atomiques APRÈS claim réussi (row-locked, increment_child_talents).
+    if (Object.keys(deltas).length > 0) {
+      const { error: talentsError } = await db.rpc("increment_child_talents", {
+        p_child_id: challenge.child_profiles.id,
+        p_deltas: deltas,
+      });
+      if (talentsError) throw new Error(talentsError.message);
+    }
 
     levelUp = await awardCompletionXP(db, challenge.child_id);
     badgeUnlocked = await checkAndAwardBadge(db, challenge.child_id, challenge.domain);
