@@ -6,7 +6,14 @@
 -- La policy USING(true) exposait les notes moyennes et les notes du professeur
 -- de TOUS les enfants à TOUT compte authentifié. La lecture passe désormais
 -- exclusivement par les server functions (qui vérifient le lien école/délégation).
-DROP POLICY IF EXISTS "Authenticated users read academic observations" ON public.child_academic_observations;
+DO $$ BEGIN
+  -- La table peut manquer sur les instances où sa migration source a été
+  -- sautée (collision de version 20260905190000) : la création suit en
+  -- 20260906130001, sans la policy USING(true).
+  IF to_regclass('public.child_academic_observations') IS NOT NULL THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Authenticated users read academic observations" ON public.child_academic_observations';
+  END IF;
+END $$;
 
 -- ── 2. Résidus du « mur public » : bucket posts supprimé ────────────────────
 -- Les tables posts/post_likes/comments ont été droppées (20260830152500) mais
@@ -15,7 +22,9 @@ DROP POLICY IF EXISTS "Public Access posts" ON storage.objects;
 DROP POLICY IF EXISTS "Users can upload their own post images" ON storage.objects;
 DROP POLICY IF EXISTS "Users can update their own post images" ON storage.objects;
 DROP POLICY IF EXISTS "Users can delete their own post images" ON storage.objects;
-DELETE FROM storage.buckets WHERE id = 'posts';
+-- Le bucket lui-même est supprimé via l'API Storage (DELETE FROM storage.buckets
+-- est bloqué par Supabase : 42501). La fermeture des policies ci-dessus suffit à
+-- bloquer la lecture anonyme.
 
 -- ── 3. RPC appelables par anonyme → service role uniquement ─────────────────
 -- consume_ai_feature_quota : p_user_id est fourni par l'appelant ; sans revoke,
