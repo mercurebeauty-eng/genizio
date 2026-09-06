@@ -12,6 +12,7 @@
 // normalizeCountryKey — jamais soumise par le client.
 
 import { z } from "zod";
+import { serverError } from "@/lib/server-error";
 import { createServerFn } from "@tanstack/react-start";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -33,7 +34,7 @@ export const getSupportedCountries = createServerFn({ method: "GET" })
       .from("country_materials")
       .select("country_key, country_label")
       .order("country_label", { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) throw serverError("country_materials", error);
     return {
       countries: (data ?? []).map((r) => ({
         key: r.country_key,
@@ -50,7 +51,7 @@ export const getCountryMaterialsAdmin = createServerFn({ method: "GET" })
       .from("country_materials")
       .select("country_key, country_label, materials, updated_at")
       .order("country_label", { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) throw serverError("country_materials", error);
     return {
       rows: (data ?? []).map((r) => ({
         countryKey: r.country_key,
@@ -96,7 +97,7 @@ export const upsertCountryMaterialAdmin = createServerFn({ method: "POST" })
       },
       { onConflict: "country_key" },
     );
-    if (error) throw new Error(error.message);
+    if (error) throw serverError("country_materials", error);
 
     // Renommage dont la clé normalisée change : l'ancienne ligne est retirée.
     if (data.originalKey && data.originalKey !== countryKey) {
@@ -119,6 +120,6 @@ export const deleteCountryMaterialAdmin = createServerFn({ method: "POST" })
       .from("country_materials")
       .delete()
       .eq("country_key", data.countryKey);
-    if (error) throw new Error(error.message);
+    if (error) throw serverError("country_materials", error);
     return { ok: true };
   });

@@ -148,8 +148,9 @@ export const createChildSafetyReport = createServerFn({ method: "POST" })
 
     // Alerte automatique pour les cas graves
     if (data.severity === "critical" || data.severity === "high") {
+      // Audit D2 : identifiants tronqués dans les logs (pas d'UUID complet).
       console.warn(
-        `🚨 ALERTE SÉCURITÉ ENFANT [${data.severity.toUpperCase()}] : Mentor ${data.accusedMentorUserId}, Enfant ${data.childId}`,
+        `🚨 ALERTE SÉCURITÉ ENFANT [${data.severity.toUpperCase()}] : mentor ${data.accusedMentorUserId.slice(0, 8)}…, enfant ${data.childId.slice(0, 8)}…`,
       );
     }
 

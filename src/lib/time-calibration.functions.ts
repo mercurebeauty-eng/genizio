@@ -12,6 +12,7 @@
 // (payload { challenge_id, domain, title, time_limit_minutes }).
 
 import { z } from "zod";
+import { serverError } from "@/lib/server-error";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertChildActor } from "@/lib/child-actor";
@@ -134,6 +135,6 @@ export const applyGentleTimeProposal = createServerFn({ method: "POST" })
       .eq("id", data.childId);
     if (actor === "owner") updateQuery.eq("user_id", userId);
     const { data: updated, error } = await updateQuery.select("time_pressure").single();
-    if (error) throw new Error(error.message);
+    if (error) throw serverError("time_calibration", error);
     return { ok: true, timePressure: updated.time_pressure };
   });

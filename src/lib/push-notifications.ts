@@ -22,7 +22,7 @@ export async function sendPushToUser(
   try {
     const { data } = await db
       .from("push_subscriptions")
-      .select("endpoint, p256dh, auth")
+      .select("id, endpoint, p256dh, auth")
       .eq("user_id", userId);
     subs = data ?? [];
   } catch (err) {
