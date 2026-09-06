@@ -1,4 +1,6 @@
 import { requireRateLimit } from "@/lib/rate-limit.middleware";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import nodemailer from "nodemailer";
 import { createClient } from "@supabase/supabase-js";
@@ -367,9 +369,18 @@ function resolveFirstName(fullName: string | null | undefined): string {
 }
 
 export const sendWelcomeEmailIfNeeded = createServerFn({ method: "POST" })
-  .middleware([requireRateLimit])
-  .validator((data: { userId: string; email: string; firstName: string | null }) => data)
-  .handler(async ({ data }) => {
+  // Audit sécurité (vague A) : avant, n'importe qui (sans login) pouvait forcer
+  // l'envoi d'un email à un destinataire arbitraire et écrire de faux
+  // consent_events sous n'importe quel userId — l'identité est désormais prise
+  // dans les claims vérifiés, plus dans le payload client.
+  .middleware([requireSupabaseAuth, requireRateLimit])
+  .validator((input: unknown) =>
+    z.object({ firstName: z.string().max(80).nullish() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const userId = (context as any).claims?.sub as string;
+    const email = ((context as any).claims?.email as string | undefined) ?? '';
+    if (!email) return { sent: false, reason: 'missing_email' };
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
@@ -384,7 +395,7 @@ export const sendWelcomeEmailIfNeeded = createServerFn({ method: "POST" })
     const { data: existing, error: checkError } = await supabase
       .from("consent_events")
       .select("id")
-      .eq("user_id", data.userId)
+      .eq("user_id", userId)
       .eq("event_type", WELCOME_EVENT_TYPE)
       .limit(1);
 
@@ -415,7 +426,7 @@ export const sendWelcomeEmailIfNeeded = createServerFn({ method: "POST" })
     const whatsappNumber =
       (process.env.VITE_WHATSAPP_NUMBER as string | undefined)?.replace(/\D/g, "") || "33606433148";
     const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Bonjour, j'ai une question sur Génizio.")}`;
-    const firstName = resolveFirstName(data.firstName) || "";
+    const firstName = resolveFirstName(data.firstName ?? undefined) || "";
 
     const senderEmail = process.env.BREVO_FROM_EMAIL || "serviceclient@genizio.com";
 
@@ -430,7 +441,7 @@ export const sendWelcomeEmailIfNeeded = createServerFn({ method: "POST" })
       await transporter.sendMail({
         from: `"L'équipe Génizio" <${senderEmail}>`,
         replyTo: senderEmail,
-        to: data.email,
+        to: email,
         subject: "🎉 Bienvenue chez Génizio — votre aventure commence maintenant",
         html: buildWelcomeEmailHtml(firstName, appLink, whatsappLink),
       });
@@ -440,9 +451,9 @@ export const sendWelcomeEmailIfNeeded = createServerFn({ method: "POST" })
     }
 
     const { error: insertError } = await supabase.from("consent_events").insert({
-      user_id: data.userId,
+      user_id: userId,
       event_type: WELCOME_EVENT_TYPE,
-      description: `Email de bienvenue envoyé à ${data.email}`,
+      description: `Email de bienvenue envoyé à ${email}`,
     });
     if (insertError) {
       console.error("[welcome-email] Envoyé mais échec de journalisation:", insertError.message);

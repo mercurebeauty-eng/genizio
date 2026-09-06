@@ -701,6 +701,19 @@ export const initializeProDossierPayment = createServerFn({ method: "POST" })
     if (delErr || !delegation) {
       throw new Error("Aucune délégation active trouvée pour cet élève.");
     }
+    // Audit sécurité (vague A) : le commentaire promettait déjà ce contrôle sans
+    // l'appliquer — n'importe qui payait le dossier Pro d'un élève dont il
+    // n'était PAS le bénéficiaire (paiement sans bénéfice, ou déblocage du
+    // dossier d'un tiers). Le payeur doit être le bénéficiaire de la délégation.
+    const callerEmail = (context as any).claims?.email as string | undefined;
+    const isBeneficiary =
+      delegation.beneficiary_user_id === userId ||
+      (!!callerEmail &&
+        !!delegation.beneficiary_email &&
+        String(delegation.beneficiary_email).toLowerCase() === callerEmail.toLowerCase());
+    if (!isBeneficiary) {
+      throw new Error("Seul le bénéficiaire de la délégation peut débloquer ce dossier.");
+    }
 
     const amountXof = PRO_DOSSIER_PRICE_XOF; // 15 000 FCFA
     const reference = createPaystackReference("PRO_DOSSIER");

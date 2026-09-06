@@ -206,6 +206,34 @@ async function loadSquad(db: any, squadId: string, userId: string) {
   return squad;
 }
 
+/**
+ * Vérifie que le mentor APPELANT est bien assigné à CHACUN des enfants donnés
+ * (assignation active, non retirée). Sans ce garde, upsertMySquad permettait
+ * à n'importe quel mentor d'ajouter n'importe quel enfant à son escouade —
+ * exposition des noms + notifications aux parents (IDOR, audit backend vague A).
+ */
+async function assertMentorAssignedChildren(
+  db: any,
+  mentorUserId: string,
+  childProfileIds: string[],
+): Promise<void> {
+  if (childProfileIds.length === 0) return;
+  const { data: assigned, error } = await db
+    .from("mentors")
+    .select("child_profile_id")
+    .eq("mentor_user_id", mentorUserId)
+    .in("child_profile_id", childProfileIds)
+    .is("removed_at", null);
+  if (error) throw new Error("Vérification des assignations impossible.");
+  const assignedSet = new Set((assigned ?? []).map((a: any) => a.child_profile_id as string));
+  const missing = childProfileIds.filter((id) => !assignedSet.has(id));
+  if (missing.length > 0) {
+    throw new Error(
+      `Ces enfants ne vous sont pas assignés : ${missing.length} profil(s) hors de votre suivi.`,
+    );
+  }
+}
+
 interface SquadMemberRow {
   childProfileId: string;
   childName: string;
@@ -323,6 +351,9 @@ export const upsertMySquad = createServerFn({ method: "POST" })
     if (found.size !== new Set(data.childProfileIds).size) {
       throw new Error("Un ou plusieurs enfants sont introuvables.");
     }
+    // Garde IDOR (audit vague A) : le mentor ne peut composer une escouade
+    // qu'avec des enfants qui lui sont assignés.
+    await assertMentorAssignedChildren(db, userId, [...new Set(data.childProfileIds)]);
 
     // Création ou mise à jour de l'escouade active unique du mentor.
     const { data: existing } = await db

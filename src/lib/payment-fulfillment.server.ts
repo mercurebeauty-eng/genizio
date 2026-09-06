@@ -17,6 +17,7 @@
 //
 // Serveur uniquement — jamais importé côté client (même pattern que paystack.server.ts).
 
+import { generateAccessCode } from "@/lib/access-codes";
 import { computeAccessPeriodWindow } from "@/lib/child-access";
 import { PALIER_CHILDREN } from "@/lib/child-profile-quota";
 import { PACK_SESSIONS } from "@/lib/pricing";
@@ -329,7 +330,7 @@ export async function applyPaystackEntitlement(
       const activeSeason = await getActiveSeason({ data: undefined });
       const codes = new Set<string>();
       while (codes.size < toCreate) {
-        codes.add(`GENIZIO-B2B-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
+        codes.add(generateAccessCode("GENIZIO-B2B"));
       }
       const tokens = Array.from(codes).map((code, i) => ({
         code,

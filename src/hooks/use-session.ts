@@ -139,7 +139,9 @@ export function useSession() {
       (meta?.name as string | undefined) ||
       null;
     sendWelcomeEmail({
-      data: { userId: session.user.id, email: session.user.email ?? "", firstName },
+      // Identité dérivée côté serveur depuis les claims (audit vague A).
+      data: { firstName },
+      headers: { Authorization: `Bearer ${session.access_token}` },
     }).catch((err) => console.error("[welcome-email] appel échoué:", err));
   }, [sessionState.signedInUserId, sessionState.session, sendWelcomeEmail]);
 

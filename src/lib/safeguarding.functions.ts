@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { requireAdmin } from "@/integrations/supabase/admin-middleware";
+import { requireAdmin, isAdminEmail } from "@/integrations/supabase/admin-middleware";
 import { z } from "zod";
 import type {
   ChildTripartiteEvaluation,
@@ -81,19 +81,48 @@ export const createChildSafetyReport = createServerFn({ method: "POST" })
     const userId =
       (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
 
-    // Détermination du rôle du rapporteur
-    let reporterRole: "parent" | "educator" | "admin" | "other" = "parent";
+    // Audit sécurité (vague A) : un signalement arme le pipeline de suspension —
+    // il ne peut être déposé que par un compte AYANT UN LIEN avec l'enfant
+    // (parent propriétaire, délégation active, école commune, ou admin).
+    // Avant : tout compte authentifié pouvait accuser n'importe quel mentor.
     const { data: child } = await db
       .from("child_profiles")
       .select("user_id")
       .eq("id", data.childId)
       .maybeSingle();
+    if (!child) throw new Error("Enfant introuvable.");
 
-    if (child?.user_id === userId) {
+    const reporterEmail = (context as any).claims?.email as string | undefined;
+    let reporterRole: "parent" | "educator" | "admin" | "other";
+    if (child.user_id === userId) {
       reporterRole = "parent";
+    } else if (reporterEmail && isAdminEmail(reporterEmail)) {
+      reporterRole = "admin";
     } else {
-      reporterRole = "educator";
+      const { data: delegation } = await db
+        .from("child_delegations")
+        .select("id")
+        .eq("child_id", data.childId)
+        .eq("beneficiary_user_id", userId)
+        .eq("status", "active")
+        .maybeSingle();
+      if (delegation) {
+        reporterRole = "educator";
+      } else {
+        throw new Error(
+          "Vous n'avez pas de lien vérifiable avec cet enfant (parent, délégation ou administration).",
+        );
+      }
     }
+
+    // Le mentor mis en cause doit exister (sinon le kill-switch est armable
+    // contre un uuid inventé).
+    const { data: accusedProfile } = await db
+      .from("mentor_profiles")
+      .select("mentor_user_id")
+      .eq("mentor_user_id", data.accusedMentorUserId)
+      .maybeSingle();
+    if (!accusedProfile) throw new Error("Mentor mis en cause introuvable.");
 
     const { data: report, error } = await db
       .from("child_safety_reports")
@@ -114,7 +143,7 @@ export const createChildSafetyReport = createServerFn({ method: "POST" })
 
     if (error) {
       console.error("Erreur createChildSafetyReport:", error);
-      throw new Error(`Impossible d'enregistrer le signalement : ${error.message}`);
+      throw new Error("Impossible d'enregistrer le signalement.");
     }
 
     // Alerte automatique pour les cas graves
